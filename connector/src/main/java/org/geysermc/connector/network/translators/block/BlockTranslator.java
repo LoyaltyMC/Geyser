@@ -32,14 +32,9 @@ import com.nukkitx.nbt.NbtUtils;
 import com.nukkitx.nbt.stream.NBTInputStream;
 import com.nukkitx.nbt.tag.CompoundTag;
 import com.nukkitx.nbt.tag.ListTag;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.utils.Toolbox;
 
@@ -93,8 +88,7 @@ public class BlockTranslator {
         } catch (Exception e) {
             throw new AssertionError("Unable to load Java block mappings", e);
         }
-        Object2IntMap<CompoundTag> addedStatesMap = new Object2IntOpenHashMap<>();
-        addedStatesMap.defaultReturnValue(-1);
+        TObjectIntMap<CompoundTag> addedStatesMap = new TObjectIntHashMap<>(512, 0.5f, -1);
         List<CompoundTag> paletteList = new ArrayList<>();
 
         int waterRuntimeId = -1;

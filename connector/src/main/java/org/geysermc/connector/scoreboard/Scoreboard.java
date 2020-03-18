@@ -30,7 +30,6 @@ import com.nukkitx.protocol.bedrock.data.ScoreInfo;
 import com.nukkitx.protocol.bedrock.packet.RemoveObjectivePacket;
 import com.nukkitx.protocol.bedrock.packet.SetDisplayObjectivePacket;
 import com.nukkitx.protocol.bedrock.packet.SetScorePacket;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
 
 import org.geysermc.connector.network.session.GeyserSession;
@@ -114,7 +113,7 @@ public class Scoreboard {
     }
 
     public void onUpdate() {
-        Set<Objective> changedObjectives = new ObjectOpenHashSet<>();
+        Set<Objective> changedObjectives = new HashSet<>();
         List<ScoreInfo> addScores = new ArrayList<>();
         List<ScoreInfo> removeScores = new ArrayList<>();
 
@@ -134,7 +133,7 @@ public class Scoreboard {
             boolean hasUpdate = globalUpdate;
 
             List<Score> handledScores = new ArrayList<>();
-            for (String identifier : new ObjectOpenHashSet<>(objective.getScores().keySet())) {
+            for (String identifier : new HashSet<>(objective.getScores().keySet())) {
                 Score score = objective.getScores().get(identifier);
                 Team team = score.getTeam();
 
