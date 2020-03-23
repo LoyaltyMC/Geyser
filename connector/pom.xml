@@ -73,6 +73,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>com.nukkitx</groupId>
+            <artifactId>fastutil-lite</artifactId>
+            <version>8.1.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>com.nukkitx.fastutil</groupId>
             <artifactId>fastutil-int-double-maps</artifactId>
             <version>8.3.1</version>
