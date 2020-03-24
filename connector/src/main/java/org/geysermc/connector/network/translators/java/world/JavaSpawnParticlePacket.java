@@ -33,6 +33,7 @@ public class JavaSpawnParticlePacket extends PacketTranslator<ServerSpawnParticl
                 fallingParticlePacket.setType(LevelEventType.PARTICLE_FALLING_DUST);
                 fallingParticlePacket.setData(BlockTranslator.getBedrockBlockId(((FallingDustParticleData)packet.getParticle().getData()).getBlockState()));
                 fallingParticlePacket.setPosition(Vector3f.from(packet.getX(), packet.getY(), packet.getZ()));
+                session.getUpstream().sendPacket(fallingParticlePacket);
                 break;
             case ITEM:
                 ItemStack javaItem = ((ItemParticleData)packet.getParticle().getData()).getItemStack();
