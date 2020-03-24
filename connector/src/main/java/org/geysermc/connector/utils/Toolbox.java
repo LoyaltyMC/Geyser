@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nukkitx.nbt.NbtUtils;
 import com.nukkitx.nbt.stream.NBTInputStream;
 import com.nukkitx.nbt.tag.CompoundTag;
-import com.nukkitx.nbt.tag.ListTag;
 import com.nukkitx.protocol.bedrock.data.ItemData;
 import com.nukkitx.protocol.bedrock.packet.StartGamePacket;
 
@@ -75,6 +74,28 @@ public class Toolbox {
         } catch (Exception ex) {
             GeyserConnector.getInstance().getLogger().warning("Failed to get biomes from biome definitions, is there something wrong with the file?");
             throw new AssertionError(ex);
+        }
+
+        /* Particle Mappings */
+        InputStream particleStream = getResource("mappings/particles.json");
+
+        TypeReference<List<JsonNode>> particleEntryType = new TypeReference<List<JsonNode>>() {};
+
+        List<JsonNode> particleEntries;
+        try {
+            particleEntries = JSON_MAPPER.readValue(particleStream, particleEntryType);
+        } catch (Exception e) {
+            throw new AssertionError("Unable to load particle map", e);
+        }
+
+        for (JsonNode entry : particleEntries) {
+            try{
+                if(!entry.get("java").asText().equals("?") && !entry.get("bedrock").asText().equals("?")){
+                    ParticleUtils.setIdentifier(ParticleType.valueOf(entry.get("java").asText().toUpperCase()), entry.get("bedrock").asText());
+                }
+            }catch (IllegalArgumentException e){
+                //throw new AssertionError("Unable to find particle " + entry.get("java").asText().toUpperCase() + "in java edition", e);
+            }
         }
 
         /* Load item palette */
