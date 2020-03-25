@@ -60,6 +60,8 @@ import org.geysermc.connector.network.translators.java.scoreboard.JavaDisplaySco
 import org.geysermc.connector.network.translators.java.scoreboard.JavaScoreboardObjectiveTranslator;
 import org.geysermc.connector.network.translators.java.scoreboard.JavaTeamTranslator;
 import org.geysermc.connector.network.translators.java.scoreboard.JavaUpdateScoreTranslator;
+import org.geysermc.connector.network.translators.java.world.JavaPlaySoundTranslator;
+import org.geysermc.connector.network.translators.java.JavaStopSoundTranslator;
 import org.geysermc.connector.network.translators.java.window.*;
 import org.geysermc.connector.network.translators.java.world.*;
 
@@ -123,6 +125,9 @@ public class TranslatorsInit {
         Registry.registerJava(ServerEntityEffectPacket.class, new JavaEntityEffectTranslator());
         Registry.registerJava(ServerEntityRemoveEffectPacket.class, new JavaEntityRemoveEffectTranslator());
         Registry.registerJava(ServerBossBarPacket.class, new JavaBossBarTranslator());
+
+        Registry.registerJava(ServerPlaySoundPacket.class, new JavaPlaySoundTranslator());
+        Registry.registerJava(ServerStopSoundPacket.class, new JavaStopSoundTranslator());
 
         Registry.registerJava(ServerSpawnExpOrbPacket.class, new JavaSpawnExpOrbTranslator());
         Registry.registerJava(ServerSpawnGlobalEntityPacket.class, new JavaSpawnGlobalEntityTranslator());

@@ -77,25 +77,39 @@ public class Toolbox {
             throw new AssertionError(ex);
         }
 
-        /* Particle Mappings */
+        /* Load particles */
         InputStream particleStream = getResource("mappings/particles.json");
 
         TypeReference<List<JsonNode>> particleEntryType = new TypeReference<List<JsonNode>>() {};
-
         List<JsonNode> particleEntries;
         try {
             particleEntries = JSON_MAPPER.readValue(particleStream, particleEntryType);
         } catch (Exception e) {
             throw new AssertionError("Unable to load particle map", e);
         }
-
         for (JsonNode entry : particleEntries) {
             try{
                 if(!entry.get("java").asText().equals("?") && !entry.get("bedrock").asText().equals("?")){
                     ParticleUtils.setIdentifier(ParticleType.valueOf(entry.get("java").asText().toUpperCase()), entry.get("bedrock").asText());
                 }
             }catch (IllegalArgumentException e){
-                //throw new AssertionError("Unable to find particle " + entry.get("java").asText().toUpperCase() + "in java edition", e);
+                //
+            }
+        }
+
+        /* Load sounds */
+        InputStream soundStream = getResource("mappings/sounds.json");
+
+        TypeReference<List<JsonNode>> soundEntryType = new TypeReference<List<JsonNode>>() {};
+        List<JsonNode> soundEntries;
+        try {
+            soundEntries = JSON_MAPPER.readValue(soundStream, soundEntryType);
+        } catch (Exception e) {
+            throw new AssertionError("Unable to load sound map", e);
+        }
+        for (JsonNode entry : soundEntries) {
+            if(!entry.get("java").asText().equals("?") && !entry.get("bedrock").asText().equals("?")){
+                SoundUtils.setIdentifier(entry.get("java").asText(), entry.get("bedrock").asText());
             }
         }
 
