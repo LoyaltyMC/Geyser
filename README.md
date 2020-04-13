@@ -1,4 +1,4 @@
-<img src="https://geysermc.org/img/geyserlogo.png" alt="Geyser" width="600"/>
+<img src="https://github.com/organizations/LoyaltyMC/settings/profile"/>
 
 [![forthebadge made-with-java](http://ForTheBadge.com/images/badges/made-with-java.svg)](https://java.com/)
 
