@@ -1,4 +1,4 @@
-<img src="https://github.com/organizations/LoyaltyMC/settings/profile"/>
+<img src="https://avatars3.githubusercontent.com/u/60059893?s=400&u=1354437a5ed40de76aaf78231b98f86b748c68b5&v=4"/>
 
 [![forthebadge made-with-java](http://ForTheBadge.com/images/badges/made-with-java.svg)](https://java.com/)
 
@@ -9,9 +9,8 @@
 
 Geyser is a bridge between Minecraft: Bedrock Edition and Minecraft: Java Edition, closing the gap from those wanting to play true cross-platform.
 
-## What is Geyser?
-Geyser is a proxy, bridging the gap between Minecraft: Bedrock Edition and Minecraft: Java Edition servers.
-The ultimate goal of this project is to allow Minecraft: Bedrock Edition users to join Minecraft: Java Edition servers as seamlessly as possible. **Please note, this project is still a work in progress and should not be used on production. Expect bugs!**
+## What is TheLoyalGeyser?
+a costom Geyser for LoyaltyMC
 
 ### Currently supporting Minecraft Bedrock v1.14.X and Minecraft Java v1.15.2.
 
@@ -26,15 +25,6 @@ Take a look [here](https://github.com/GeyserMC/Geyser/wiki#Setup) for how to set
 - Download: http://ci.geysermc.org
 - Discord: http://discord.geysermc.org/
 - Donate: https://patreon.com/GeyserMC
-
-## What's Left to be Added/Fixed
-- Inventories ([`inventory`](https://github.com/GeyserMC/Geyser/tree/inventory))
-- Crafting ([`inventory`](https://github.com/GeyserMC/Geyser/tree/inventory))
-- Creative Mode ([`inventory`](https://github.com/GeyserMC/Geyser/tree/inventory))
-- Sounds
-- Block Particles
-- Block Entities ([`inventory`](https://github.com/GeyserMC/Geyser/tree/inventory))
-- Some Entity Flags
 
 ## Compiling
 1. Clone the repo to your computer
