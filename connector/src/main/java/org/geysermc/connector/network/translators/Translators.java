@@ -34,20 +34,8 @@ import com.github.steveice10.mc.protocol.data.game.window.WindowType;
 import com.nukkitx.protocol.bedrock.data.ContainerType;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.network.translators.block.BlockTranslator;
-import org.geysermc.connector.network.translators.block.entity.BannerBlockEntityTranslator;
-import org.geysermc.connector.network.translators.block.entity.BlockEntityTranslator;
-import org.geysermc.connector.network.translators.block.entity.CampfireBlockEntityTranslator;
-import org.geysermc.connector.network.translators.block.entity.EmptyBlockEntityTranslator;
-import org.geysermc.connector.network.translators.block.entity.SignBlockEntityTranslator;
-import org.geysermc.connector.network.translators.inventory.AnvilInventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.BlockInventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.BrewingInventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.CraftingInventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.DoubleChestInventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.FurnaceInventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.InventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.PlayerInventoryTranslator;
-import org.geysermc.connector.network.translators.inventory.SingleChestInventoryTranslator;
+import org.geysermc.connector.network.translators.block.entity.*;
+import org.geysermc.connector.network.translators.inventory.*;
 import org.geysermc.connector.network.translators.inventory.updater.ContainerInventoryUpdater;
 import org.geysermc.connector.network.translators.inventory.updater.InventoryUpdater;
 import org.geysermc.connector.network.translators.item.ItemTranslator;
@@ -145,6 +133,7 @@ public class Translators {
         inventoryTranslators.put(WindowType.BREWING_STAND, new BrewingInventoryTranslator());
         inventoryTranslators.put(WindowType.ANVIL, new AnvilInventoryTranslator());
         inventoryTranslators.put(WindowType.CRAFTING, new CraftingInventoryTranslator());
+        inventoryTranslators.put(WindowType.GRINDSTONE, new GrindstoneInventoryTranslator());
         //inventoryTranslators.put(WindowType.ENCHANTMENT, new EnchantmentInventoryTranslator()); //TODO
 
         InventoryTranslator furnace = new FurnaceInventoryTranslator();
