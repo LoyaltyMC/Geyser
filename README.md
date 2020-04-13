@@ -9,8 +9,10 @@
 
 Geyser is a bridge between Minecraft: Bedrock Edition and Minecraft: Java Edition, closing the gap from those wanting to play true cross-platform.
 
+## warning: Don't post bug reports in the Geyser discord or the Geyser repo. Use this at your own risk
+
 ## What is TheLoyalGeyser?
-a costom Geyser for LoyaltyMC
+a customized Geyser for LoyaltyMC
 
 ### Currently supporting Minecraft Bedrock v1.14.X and Minecraft Java v1.15.2.
 
