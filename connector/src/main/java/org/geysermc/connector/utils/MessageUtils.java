@@ -32,6 +32,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import org.geysermc.connector.network.session.GeyserSession;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -58,7 +59,7 @@ public class MessageUtils {
                     strings.add(" - no permission or invalid command!");
                 }
 
-                List<String> furtherParams = getTranslationParams(translation.getTranslationParams());
+                List<String> furtherParams = getTranslationParams(translation.getTranslationParams(), locale);
                 if (locale != null) {
                     strings.add(insertParams(LocaleUtils.getLocaleString(translation.getTranslationKey(), locale), furtherParams));
                 }else{
@@ -96,7 +97,11 @@ public class MessageUtils {
             messageText = LocaleUtils.getLocaleString(messageText, locale);
         }
 
-        StringBuilder builder = new StringBuilder(messageText);
+        StringBuilder builder = new StringBuilder();
+        builder.append(getFormat(message.getStyle().getFormats()));
+        builder.append(getColorOrParent(message.getStyle()));
+        builder.append(messageText);
+
         for (Message msg : message.getExtra()) {
             builder.append(getFormat(msg.getStyle().getFormats()));
             builder.append(getColorOrParent(msg.getStyle()));
@@ -139,8 +144,8 @@ public class MessageUtils {
     private static String getColorOrParent(MessageStyle style) {
         ChatColor chatColor = style.getColor();
 
-        if (chatColor == ChatColor.NONE) {
-            return getColor(style.getParent().getColor());
+        if (chatColor == ChatColor.NONE && style.getParent() != null) {
+            return getColorOrParent(style.getParent());
         }
 
         return getColor(chatColor);
@@ -289,5 +294,15 @@ public class MessageUtils {
             }
         }
         return "";
+    }
+
+    public static boolean isTooLong(String message, GeyserSession session) {
+        if (message.length() > 256) {
+            // TODO: Add Geyser localization and translate this based on language
+            session.sendMessage("Your message is bigger than 256 characters (" + message.length() + ") so it has not been sent.");
+            return false;
+        }
+
+        return true;
     }
 }
