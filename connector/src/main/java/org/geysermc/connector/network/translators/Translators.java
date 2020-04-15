@@ -120,7 +120,6 @@ public class Translators {
         blockEntityTranslators.put("Sign", new SignBlockEntityTranslator());
         blockEntityTranslators.put("Campfire", new CampfireBlockEntityTranslator());
         blockEntityTranslators.put("Banner", new BannerBlockEntityTranslator());
-        blockEntityTranslators.put("EndGateway", new EndGatewayBlockEntityTranslator());
     }
 
     private static void registerInventoryTranslators() {
