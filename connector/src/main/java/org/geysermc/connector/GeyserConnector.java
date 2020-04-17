@@ -27,7 +27,7 @@ package org.geysermc.connector;
 
 import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.BedrockServer;
-import com.nukkitx.protocol.bedrock.v389.Bedrock_v389;
+import com.nukkitx.protocol.bedrock.v390.Bedrock_v390;
 
 import lombok.Getter;
 
@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 public class GeyserConnector {
 
-    public static final BedrockPacketCodec BEDROCK_PACKET_CODEC = Bedrock_v389.V389_CODEC;
+    public static final BedrockPacketCodec BEDROCK_PACKET_CODEC = Bedrock_v390.V390_CODEC;
 
     public static final Properties GIT_PROPERTIES = loadGitProperties();
 
