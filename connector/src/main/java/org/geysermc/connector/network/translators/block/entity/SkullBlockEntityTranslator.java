@@ -36,9 +36,11 @@ import org.geysermc.connector.utils.BlockEntityUtils;
 
 import java.util.concurrent.TimeUnit;
 
-public class SkullBlockEntityTranslator {
+@BlockEntity(name = "", delay = true)
+public class SkullBlockEntityTranslator extends BedrockOnlyBlockEntityTranslator {
 
-    public static void checkForSkullVariant(GeyserSession session, BlockState blockState, Vector3i position) {
+    @Override
+    public void checkForBlockEntity(GeyserSession session, BlockState blockState, Vector3i position) {
         byte skullVariant = BlockTranslator.getSkullVariant(blockState);
         byte rotation = BlockTranslator.getSkullRotation(blockState);
         if (skullVariant > -1) {

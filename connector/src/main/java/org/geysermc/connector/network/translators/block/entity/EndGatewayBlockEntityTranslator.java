@@ -26,54 +26,58 @@
 package org.geysermc.connector.network.translators.block.entity;
 
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.ListTag;
+import com.github.steveice10.opennbt.tag.builtin.LongTag;
 import com.nukkitx.nbt.CompoundTagBuilder;
-import com.nukkitx.nbt.tag.StringTag;
+import com.nukkitx.nbt.tag.IntTag;
 import com.nukkitx.nbt.tag.Tag;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
-@BlockEntity(name = "Banner", delay = false)
-public class BannerBlockEntityTranslator extends BlockEntityTranslator {
-
+@BlockEntity(name = "EndGateway", delay = true)
+public class EndGatewayBlockEntityTranslator extends BlockEntityTranslator {
     @Override
     public List<Tag<?>> translateTag(CompoundTag tag) {
         List<Tag<?>> tags = new ArrayList<>();
-        ListTag patterns = tag.get("Patterns");
-        List<com.nukkitx.nbt.tag.CompoundTag> tagsList = new ArrayList<>();
-        if (tag.contains("Patterns")) {
-            for (com.github.steveice10.opennbt.tag.builtin.Tag patternTag : patterns.getValue()) {
-                tagsList.add(getPattern((CompoundTag) patternTag));
-            }
-            com.nukkitx.nbt.tag.ListTag<com.nukkitx.nbt.tag.CompoundTag> bedrockPatterns =
-                    new com.nukkitx.nbt.tag.ListTag<>("Patterns", com.nukkitx.nbt.tag.CompoundTag.class, tagsList);
-            tags.add(bedrockPatterns);
-        }
-        if (tag.contains("CustomName")) {
-            tags.add(new StringTag("CustomName", (String) tag.get("CustomName").getValue()));
-        }
+        tags.add(new IntTag("Age", (int) (long) tag.get("Age").getValue()));
+        // Java sometimes does not provide this tag, but Bedrock crashes if it doesn't exist
+        // Linked coordinates
+        List<IntTag> tagsList = new ArrayList<>();
+        // Yes, the axis letters are capitalized
+        tagsList.add(new IntTag("", getExitPortalCoordinate(tag, "X")));
+        tagsList.add(new IntTag("", getExitPortalCoordinate(tag, "Y")));
+        tagsList.add(new IntTag("", getExitPortalCoordinate(tag, "Z")));
+        com.nukkitx.nbt.tag.ListTag<IntTag> exitPortal =
+                new com.nukkitx.nbt.tag.ListTag<>("ExitPortal", IntTag.class, tagsList);
+        tags.add(exitPortal);
         return tags;
     }
 
     @Override
     public CompoundTag getDefaultJavaTag(String javaId, int x, int y, int z) {
         CompoundTag tag = getConstantJavaTag(javaId, x, y, z);
-        tag.put(new ListTag("Patterns"));
+        tag.put(new LongTag("Age"));
         return tag;
     }
 
     @Override
     public com.nukkitx.nbt.tag.CompoundTag getDefaultBedrockTag(String bedrockId, int x, int y, int z) {
         CompoundTagBuilder tagBuilder = getConstantBedrockTag(bedrockId, x, y, z).toBuilder();
-        tagBuilder.listTag("Patterns", com.nukkitx.nbt.tag.CompoundTag.class, new ArrayList<>());
+        List<IntTag> tagsList = new ArrayList<>();
+        tagsList.add(new IntTag("", 0));
+        tagsList.add(new IntTag("", 0));
+        tagsList.add(new IntTag("", 0));
+        tagBuilder.listTag("ExitPortal", IntTag.class, tagsList);
         return tagBuilder.buildRootTag();
     }
 
-    protected com.nukkitx.nbt.tag.CompoundTag getPattern(CompoundTag pattern) {
-        return CompoundTagBuilder.builder()
-                .intTag("Color", (int) pattern.get("Color").getValue())
-                .stringTag("Pattern", (String) pattern.get("Pattern").getValue())
-                .buildRootTag();
+    private int getExitPortalCoordinate(CompoundTag tag, String axis) {
+        // Return 0 if it doesn't exist, otherwise give proper value
+        if (tag.get("ExitPortal") != null) {
+            LinkedHashMap compoundTag = (LinkedHashMap) tag.get("ExitPortal").getValue();
+            com.github.steveice10.opennbt.tag.builtin.IntTag intTag = (com.github.steveice10.opennbt.tag.builtin.IntTag) compoundTag.get(axis);
+            return intTag.getValue();
+        } return 0;
     }
 }

@@ -26,6 +26,7 @@
 package org.geysermc.connector.network.translators.block;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position;
 import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
 import com.nukkitx.nbt.CompoundTagBuilder;
 import com.nukkitx.nbt.NbtUtils;
@@ -47,7 +48,10 @@ import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.utils.BlockEntityUtils;
 import org.geysermc.connector.utils.Toolbox;
+import org.geysermc.connector.world.chunk.ChunkPosition;
+import org.reflections.Reflections;
 
 import java.io.InputStream;
 import java.util.*;
@@ -110,6 +114,8 @@ public class BlockTranslator {
         addedStatesMap.defaultReturnValue(-1);
         List<CompoundTag> paletteList = new ArrayList<>();
 
+        Reflections ref = new Reflections("org.geysermc.connector.network.translators.block");
+
         int waterRuntimeId = -1;
         int javaRuntimeId = -1;
         int bedrockRuntimeId = 0;
@@ -145,9 +151,21 @@ public class BlockTranslator {
 
             JAVA_ID_BLOCK_MAP.put(javaId, javaBlockState);
 
-            if (javaId.contains("sign[")) {
-                JAVA_ID_TO_BLOCK_ENTITY_MAP.put(javaBlockState, javaId);
-            }
+//            if (javaId.contains("sign[")) {
+//                JAVA_ID_TO_BLOCK_ENTITY_MAP.put(javaBlockState, javaId);
+//            }
+
+//            String identifier;
+//            String temporary;
+//            for (Class<?> clazz : ref.getTypesAnnotatedWith(LoadLater.class)) {
+//                identifier = clazz.getAnnotation(LoadLater.class).identifier();
+//                temporary = javaId.split("\\[")[0];
+//                if (temporary.contains(identifier)) {
+//                    System.out.println("Putting " + javaId + " on the map.");
+//                    JAVA_ID_TO_BLOCK_ENTITY_MAP.put(javaBlockState, javaId);
+//                    break;
+//                }
+//            }
 
 
             JsonNode skullVariation = entry.getValue().get("variation");
