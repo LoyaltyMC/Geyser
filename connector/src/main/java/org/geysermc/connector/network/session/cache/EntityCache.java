@@ -49,8 +49,8 @@ public class EntityCache {
     private Long2ObjectMap<Entity> entities = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
     private Long2LongMap entityIdTranslations = Long2LongMaps.synchronize(new Long2LongOpenHashMap());
     private Map<UUID, PlayerEntity> playerEntities = Collections.synchronizedMap(new HashMap<>());
-    private Object2LongMap<UUID> bossbars = new Object2LongOpenHashMap<>();
-    private Long2LongMap cachedPlayerEntityLinks = Long2LongMaps.synchronize(new Long2LongOpenHashMap());
+    private Map<UUID, BossBar> bossBars = Collections.synchronizedMap(new HashMap<>());
+	private Long2LongMap cachedPlayerEntityLinks = Long2LongMaps.synchronize(new Long2LongOpenHashMap());
 
     @Getter
     private AtomicLong nextEntityId = new AtomicLong(2L);
