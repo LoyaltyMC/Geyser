@@ -14,7 +14,7 @@ Geyser is a bridge between Minecraft: Bedrock Edition and Minecraft: Java Editio
 ## What is TheLoyalGeyser?
 a customized Geyser for LoyaltyMC
 
-### Currently supporting Minecraft Bedrock v1.14.X and Minecraft Java v1.15.2.
+### Currently supporting Minecraft Bedrock v1.14.6(0) and Minecraft Java v1.15.2.
 
 ## Setting Up
 Take a look [here](https://github.com/GeyserMC/Geyser/wiki#Setup) for how to set up Geyser.
