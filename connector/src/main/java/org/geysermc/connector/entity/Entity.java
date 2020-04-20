@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2019-2020 GeyserMC. http://geysermc.org
  *
@@ -43,7 +42,6 @@ import com.nukkitx.protocol.bedrock.data.*;
 import com.nukkitx.protocol.bedrock.packet.*;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -79,7 +77,7 @@ public class Entity {
 
     protected boolean valid;
 
-    protected LongSet passengers = new LongOpenHashSet();
+    protected LongOpenHashSet passengers = new LongOpenHashSet();
     protected Map<AttributeType, Attribute> attributes = new HashMap<>();
     protected EntityDataMap metadata = new EntityDataMap();
 
