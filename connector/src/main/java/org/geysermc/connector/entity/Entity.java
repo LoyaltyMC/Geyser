@@ -204,10 +204,8 @@ public class Entity {
                     metadata.getFlags().setFlag(EntityFlag.GLIDING, (xd & 0x80) == 0x80);
                     ClientPlayerUseItemPacket useItemPacket = new ClientPlayerUseItemPacket(Hand.MAIN_HAND);
                     if(session.getPlayerEntity().getEntityId() == entityId && metadata.getFlags().getFlag(EntityFlag.SNEAKING) && session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36).getId() == 829) {
-                        System.out.println(session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36));
                         metadata.getFlags().setFlag(EntityFlag.BLOCKING, true);
                         session.getDownstream().getSession().send(useItemPacket);
-                        System.out.println("sneaking");
                     }
                     else if(session.getPlayerEntity().getEntityId() == entityId && metadata.getFlags().getFlag(EntityFlag.SNEAKING) == false && metadata.getFlags().getFlag(EntityFlag.BLOCKING) == true) {
                         metadata.getFlags().setFlag(EntityFlag.BLOCKING, false);
