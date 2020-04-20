@@ -32,6 +32,7 @@ import com.nukkitx.protocol.bedrock.v390.Bedrock_v390;
 import lombok.Getter;
 
 import org.geysermc.common.AuthType;
+import org.geysermc.common.IGeyserConfiguration;
 import org.geysermc.common.PlatformType;
 import org.geysermc.common.bootstrap.IGeyserBootstrap;
 import org.geysermc.common.logger.IGeyserLogger;
@@ -43,12 +44,13 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.Translators;
 import org.geysermc.connector.thread.PingPassthroughThread;
 import org.geysermc.connector.utils.Toolbox;
-import org.geysermc.common.IGeyserConfiguration;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -59,8 +61,11 @@ public class GeyserConnector {
 
     public static final BedrockPacketCodec BEDROCK_PACKET_CODEC = Bedrock_v390.V390_CODEC;
 
+    public static final Properties GIT_PROPERTIES = loadGitProperties();
+
     public static final String NAME = "Geyser";
-    public static final String VERSION = "1.0-SNAPSHOT";
+    public static final String VERSION = getVersion();
+    public static final String VERSION_STATIC = "git";
 
     private final Map<InetSocketAddress, GeyserSession> players = new HashMap<>();
 
@@ -214,5 +219,34 @@ public class GeyserConnector {
 
     public static GeyserConnector getInstance() {
         return instance;
+    }
+
+    public static Properties loadGitProperties() {
+        InputStream gitPropertiesFile = GeyserConnector.class.getClassLoader().getResourceAsStream("git.properties");
+        if (gitPropertiesFile == null) { return null; }
+
+        Properties gitProperties = new Properties();
+        try {
+            gitProperties.load(gitPropertiesFile);
+        } catch (Exception e) {
+            getInstance().getLogger().debug("Failed to load git.properties");
+            return null;
+        }
+
+        return gitProperties;
+    }
+
+    private static String getVersion() {
+        String versionPrefix = "git-";
+
+        if (GIT_PROPERTIES != null) {
+            String commitID = GIT_PROPERTIES.getProperty("git.commit.id.abbrev");
+            String branch = GIT_PROPERTIES.getProperty("git.branch");
+            if (commitID != null) {
+                return versionPrefix + branch + "-" + commitID;
+            }
+        }
+
+        return versionPrefix + "unknown";
     }
 }

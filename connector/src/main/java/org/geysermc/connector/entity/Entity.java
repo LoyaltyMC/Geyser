@@ -29,14 +29,10 @@ import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadat
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.MetadataType;
 import com.github.steveice10.mc.protocol.data.message.TextMessage;
 import com.nukkitx.math.vector.Vector3f;
-import com.nukkitx.protocol.bedrock.data.EntityData;
-import com.nukkitx.protocol.bedrock.data.EntityDataMap;
-import com.nukkitx.protocol.bedrock.data.EntityFlag;
-import com.nukkitx.protocol.bedrock.data.EntityFlags;
+import com.nukkitx.protocol.bedrock.data.*;
 import com.nukkitx.protocol.bedrock.packet.*;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -53,6 +49,7 @@ import java.util.*;
 @Getter
 @Setter
 public class Entity {
+
     protected long entityId;
     protected long geyserId;
 
@@ -72,7 +69,7 @@ public class Entity {
 
     protected boolean valid;
 
-    protected LongSet passengers = new LongOpenHashSet();
+    protected LongOpenHashSet passengers = new LongOpenHashSet();
     protected Map<AttributeType, Attribute> attributes = new HashMap<>();
     protected EntityDataMap metadata = new EntityDataMap();
 
@@ -151,11 +148,11 @@ public class Entity {
         session.getUpstream().sendPacket(moveEntityPacket);
     }
 
-    public void moveAbsolute(GeyserSession session, Vector3f position, float yaw, float pitch, boolean isOnGround) {
-        moveAbsolute(session, position, Vector3f.from(yaw, pitch, yaw), isOnGround);
+    public void moveAbsolute(GeyserSession session, Vector3f position, float yaw, float pitch, boolean isOnGround, boolean teleported) {
+        moveAbsolute(session, position, Vector3f.from(yaw, pitch, yaw), isOnGround, teleported);
     }
 
-    public void moveAbsolute(GeyserSession session, Vector3f position, Vector3f rotation, boolean isOnGround) {
+    public void moveAbsolute(GeyserSession session, Vector3f position, Vector3f rotation, boolean isOnGround, boolean teleported) {
         setPosition(position);
         setRotation(rotation);
 
@@ -164,7 +161,7 @@ public class Entity {
         moveEntityPacket.setPosition(position);
         moveEntityPacket.setRotation(getBedrockRotation());
         moveEntityPacket.setOnGround(isOnGround);
-        moveEntityPacket.setTeleported(false);
+        moveEntityPacket.setTeleported(teleported);
 
         session.getUpstream().sendPacket(moveEntityPacket);
     }
