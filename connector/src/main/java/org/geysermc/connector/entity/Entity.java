@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2019-2020 GeyserMC. http://geysermc.org
  *
@@ -26,13 +27,23 @@
 package org.geysermc.connector.entity;
 
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata;
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.ItemStack;
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.MetadataType;
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position;
+import com.github.steveice10.mc.protocol.data.game.entity.player.Hand;
+import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerAction;
+import com.github.steveice10.mc.protocol.data.game.world.block.BlockFace;
 import com.github.steveice10.mc.protocol.data.message.TextMessage;
+import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerActionPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPlaceBlockPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerPositionPacket;
+import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerUseItemPacket;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.data.*;
 import com.nukkitx.protocol.bedrock.packet.*;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -49,7 +60,6 @@ import java.util.*;
 @Getter
 @Setter
 public class Entity {
-
     protected long entityId;
     protected long geyserId;
 
@@ -69,7 +79,7 @@ public class Entity {
 
     protected boolean valid;
 
-    protected LongOpenHashSet passengers = new LongOpenHashSet();
+    protected LongSet passengers = new LongOpenHashSet();
     protected Map<AttributeType, Attribute> attributes = new HashMap<>();
     protected EntityDataMap metadata = new EntityDataMap();
 
@@ -184,6 +194,7 @@ public class Entity {
     }
 
     public void updateBedrockMetadata(EntityMetadata entityMetadata, GeyserSession session) {
+        System.out.println(entityMetadata.getId() + " " + entityMetadata.getType() + " " + entityMetadata.getValue());
         switch (entityMetadata.getId()) {
             case 0:
                 if (entityMetadata.getType() == MetadataType.BYTE) {
@@ -193,6 +204,18 @@ public class Entity {
                     metadata.getFlags().setFlag(EntityFlag.SPRINTING, (xd & 0x08) == 0x08);
                     metadata.getFlags().setFlag(EntityFlag.SWIMMING, (xd & 0x10) == 0x10);
                     metadata.getFlags().setFlag(EntityFlag.GLIDING, (xd & 0x80) == 0x80);
+                    ClientPlayerUseItemPacket useItemPacket = new ClientPlayerUseItemPacket(Hand.MAIN_HAND);
+                    if(session.getPlayerEntity().getEntityId() == entityId && metadata.getFlags().getFlag(EntityFlag.SNEAKING) && session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36).getId() == 829) {
+                        System.out.println(session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36));
+                        metadata.getFlags().setFlag(EntityFlag.BLOCKING, true);
+                        session.getDownstream().getSession().send(useItemPacket);
+                        System.out.println("sneaking");
+                    }
+                    else if(session.getPlayerEntity().getEntityId() == entityId && metadata.getFlags().getFlag(EntityFlag.SNEAKING) == false && metadata.getFlags().getFlag(EntityFlag.BLOCKING) == true) {
+                        metadata.getFlags().setFlag(EntityFlag.BLOCKING, false);
+                        ClientPlayerActionPacket releaseItemPacket = new ClientPlayerActionPacket(PlayerAction.RELEASE_USE_ITEM, new Position(0,0,0), BlockFace.DOWN);
+                        session.getDownstream().getSession().send(releaseItemPacket);
+                    }
                     // metadata.getFlags().setFlag(EntityFlag.INVISIBLE, (xd & 0x20) == 0x20);
                     if ((xd & 0x20) == 0x20)
                         metadata.put(EntityData.SCALE, 0.0f);
@@ -214,6 +237,12 @@ public class Entity {
                 break;
             case 5: // no gravity
                 metadata.getFlags().setFlag(EntityFlag.HAS_GRAVITY, !(boolean) entityMetadata.getValue());
+                break;
+            case 7: // blocking
+                if (entityMetadata.getType() == MetadataType.BYTE) {
+                    byte xd = (byte) entityMetadata.getValue();
+                    metadata.getFlags().setFlag(EntityFlag.BLOCKING, (xd & 0x01) == 0x01);
+                }
                 break;
         }
 
