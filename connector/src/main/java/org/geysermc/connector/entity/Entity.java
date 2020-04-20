@@ -50,7 +50,9 @@ import org.geysermc.connector.entity.attribute.Attribute;
 import org.geysermc.connector.entity.attribute.AttributeType;
 import org.geysermc.connector.entity.type.EntityType;
 import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.inventory.updater.ContainerInventoryUpdater;
 import org.geysermc.connector.utils.AttributeUtils;
+import org.geysermc.connector.utils.InventoryUtils;
 import org.geysermc.connector.utils.MessageUtils;
 
 import java.util.*;
@@ -202,13 +204,15 @@ public class Entity {
                     metadata.getFlags().setFlag(EntityFlag.SPRINTING, (xd & 0x08) == 0x08);
                     metadata.getFlags().setFlag(EntityFlag.SWIMMING, (xd & 0x10) == 0x10);
                     metadata.getFlags().setFlag(EntityFlag.GLIDING, (xd & 0x80) == 0x80);
-                    ClientPlayerUseItemPacket useItemPacket = new ClientPlayerUseItemPacket(Hand.MAIN_HAND);
-                    if(session.getPlayerEntity().getEntityId() == entityId && metadata.getFlags().getFlag(EntityFlag.SNEAKING) && session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36).getId() == 829) {
+                    if(session.getPlayerEntity().getEntityId() == entityId && metadata.getFlags().getFlag(EntityFlag.SNEAKING) && (session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36).getId() == 829)) {
                         metadata.getFlags().setFlag(EntityFlag.BLOCKING, true);
+                        ClientPlayerUseItemPacket useItemPacket = new ClientPlayerUseItemPacket(Hand.MAIN_HAND);
                         session.getDownstream().getSession().send(useItemPacket);
+                        System.out.println("sneaking");
                     }
                     else if(session.getPlayerEntity().getEntityId() == entityId && metadata.getFlags().getFlag(EntityFlag.SNEAKING) == false && metadata.getFlags().getFlag(EntityFlag.BLOCKING) == true) {
                         metadata.getFlags().setFlag(EntityFlag.BLOCKING, false);
+                        metadata.getFlags().setFlag(EntityFlag.DISABLE_BLOCKING, true);
                         ClientPlayerActionPacket releaseItemPacket = new ClientPlayerActionPacket(PlayerAction.RELEASE_USE_ITEM, new Position(0,0,0), BlockFace.DOWN);
                         session.getDownstream().getSession().send(releaseItemPacket);
                     }
