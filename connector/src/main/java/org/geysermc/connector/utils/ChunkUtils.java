@@ -39,6 +39,7 @@ import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
+import lombok.Getter;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.block.entity.*;
@@ -56,15 +57,19 @@ import static org.geysermc.connector.network.translators.block.BlockTranslator.B
 
 public class ChunkUtils {
 
+    /**
+     * Temporarily stores positions of BlockState values that are needed for certain block entities actively
+     */
+    public static final Map<Position, BlockState> CACHED_BLOCK_ENTITIES = new HashMap<>();
+
     public static ChunkData translateToBedrock(Column column) {
         ChunkData chunkData = new ChunkData();
         Chunk[] chunks = column.getChunks();
         chunkData.sections = new ChunkSection[chunks.length];
 
         CompoundTag[] blockEntities = column.getTileEntities();
-        Position[] blockEntityPositions = new Position[blockEntities.length];
-
-        Reflections ref = new Reflections("org.geysermc.connector.network.translators.block.entity");
+        // Temporarily stores positions of BlockState values per chunk load
+        Map<Position, BlockState> blockEntityPositions = new HashMap<>();
 
         for (int chunkY = 0; chunkY < chunks.length; chunkY++) {
             chunkData.sections[chunkY] = new ChunkSection();
@@ -80,15 +85,18 @@ public class ChunkUtils {
                         BlockState blockState = chunk.get(x, y, z);
                         int id = BlockTranslator.getBedrockBlockId(blockState);
 
-                        // Rundown of this section:
-                        // Check to see if the name is in BlockTranslator.getBlockEntityString
-
+                        // Check to see if the name is in BlockTranslator.getBlockEntityString, and therefore must be handled differently
                         if (BlockTranslator.getBlockEntityString(blockState) != null) {
+                            // Get the block entity translator
                             BlockEntityTranslator blockEntityTranslator = BlockEntityUtils.getBlockEntityTranslator(BlockTranslator.getBlockEntityString(blockState));
+                            Position pos = new ChunkPosition(column.getX(), column.getZ()).getBlock(x, (chunkY << 4) + y, z);
+                            blockEntityPositions.put(pos, blockState);
+                            // If there is a delay required for the block, allow it.
                             if (blockEntityTranslator.getClass().getAnnotation(BlockEntity.class).delay()) {
-                                Position pos = new ChunkPosition(column.getX(), column.getZ()).getBlock(x, (chunkY << 4) + y, z);
                                 chunkData.loadBlockEntitiesLater.put(blockEntityTranslator.getDefaultBedrockTag(BlockEntityUtils.getBedrockBlockEntityId(BlockTranslator.getBlockEntityString(blockState)),
                                         pos.getX(), pos.getY(), pos.getZ()), blockState.getId());
+                            } else {
+                                section.getBlockStorageArray()[0].setFullBlock(ChunkSection.blockPosition(x, y, z), id);
                             }
                         } else {
                             section.getBlockStorageArray()[0].setFullBlock(ChunkSection.blockPosition(x, y, z), id);
@@ -112,12 +120,12 @@ public class ChunkUtils {
                 tagName = "Empty";
             } else {
                 tagName = (String) tag.get("id").getValue();
-                System.out.println(tagName);
             }
 
             String id = BlockEntityUtils.getBedrockBlockEntityId(tagName);
             BlockEntityTranslator blockEntityTranslator = BlockEntityUtils.getBlockEntityTranslator(id);
-            bedrockBlockEntities[i] = blockEntityTranslator.getBlockEntityTag(tagName, tag);
+            BlockState blockState = blockEntityPositions.get(new Position((int) tag.get("x").getValue(), (int) tag.get("y").getValue(), (int) tag.get("z").getValue()));
+            bedrockBlockEntities[i] = blockEntityTranslator.getBlockEntityTag(tagName, tag, blockState);
         }
 
         chunkData.blockEntities = bedrockBlockEntities;
@@ -163,14 +171,17 @@ public class ChunkUtils {
         }
         session.getUpstream().sendPacket(waterPacket);
 
-        // Since Java stores bed colors as part of the namespaced ID and Bedrock stores it as a tag
+        // Since Java stores bed colors/skull information as part of the namespaced ID and Bedrock stores it as a tag
         // This is the only place I could find that interacts with the Java block state and block updates
         Reflections ref = new Reflections("org.geysermc.connector.network.translators.block.entity");
-        Set<Class<? extends BedrockOnlyBlockEntityTranslator>> classes = ref.getSubTypesOf(BedrockOnlyBlockEntityTranslator.class);
-        for (Class<? extends BedrockOnlyBlockEntityTranslator> aClass : classes) {
+        Set<Class<? extends RequiresBlockState>> classes = ref.getSubTypesOf(RequiresBlockState.class);
+        for (Class<? extends RequiresBlockState> aClass : classes) {
             try {
-                BedrockOnlyBlockEntityTranslator bedrockOnlyBlockEntityTranslator = aClass.newInstance();
-                bedrockOnlyBlockEntityTranslator.checkForBlockEntity(session, blockState, position);
+                RequiresBlockState requiresBlockState = aClass.newInstance();
+                if (requiresBlockState.isBlock(blockState)) {
+                    CACHED_BLOCK_ENTITIES.put(new Position(position.getX(), position.getY(), position.getZ()), blockState);
+                    break; //No block will be a part of two classes
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -205,7 +216,9 @@ public class ChunkUtils {
     public static final class ChunkData {
         public ChunkSection[] sections;
 
-        public com.nukkitx.nbt.tag.CompoundTag[] blockEntities = new com.nukkitx.nbt.tag.CompoundTag[0];
-        public Object2IntMap<com.nukkitx.nbt.tag.CompoundTag> loadBlockEntitiesLater = new Object2IntOpenHashMap<>();
+        @Getter
+        private com.nukkitx.nbt.tag.CompoundTag[] blockEntities = new com.nukkitx.nbt.tag.CompoundTag[0];
+        @Getter
+        private Object2IntMap<com.nukkitx.nbt.tag.CompoundTag> loadBlockEntitiesLater = new Object2IntOpenHashMap<>();
     }
 }

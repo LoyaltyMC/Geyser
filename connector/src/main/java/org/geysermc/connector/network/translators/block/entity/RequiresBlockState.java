@@ -25,21 +25,18 @@
 
 package org.geysermc.connector.network.translators.block.entity;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
 
-@Retention(value = RetentionPolicy.RUNTIME)
-public @interface BlockEntity {
+/**
+ * Implemented in block entities if their Java block state is required for additional values in Bedrock
+ */
+public interface RequiresBlockState {
+
     /**
-     * Whether to delay the sending of the block entity
+     * Determines if block is part of class
+     * @param blockState BlockState to be compared
+     * @return true if part of the class
      */
-    boolean delay();
-    /**
-     * The block entity name
-     */
-    String name();
-    /**
-     * The search term used in BlockTranslator
-     */
-    String regex();
+    boolean isBlock(BlockState blockState);
+
 }

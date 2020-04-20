@@ -26,7 +26,6 @@
 package org.geysermc.connector.network.translators.block;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position;
 import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
 import com.nukkitx.nbt.CompoundTagBuilder;
 import com.nukkitx.nbt.NbtUtils;
@@ -43,15 +42,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.network.translators.block.entity.BlockEntity;
-import org.geysermc.connector.utils.BlockEntityUtils;
 import org.geysermc.connector.utils.Toolbox;
-import org.geysermc.connector.world.chunk.ChunkPosition;
 import org.reflections.Reflections;
 
 import java.io.InputStream;
@@ -71,9 +66,6 @@ public class BlockTranslator {
     public static final int CARPET = 171;
 
     private static final Map<BlockState, String> JAVA_ID_TO_BLOCK_ENTITY_MAP = new HashMap<>();
-    private static final Object2ByteMap<BlockState> BED_COLORS = new Object2ByteOpenHashMap<>();
-    private static final Object2ByteMap<BlockState> SKULL_VARIANTS = new Object2ByteOpenHashMap<>();
-    private static final Object2ByteMap<BlockState> SKULL_ROTATIONS = new Object2ByteOpenHashMap<>();
 
     public static final Int2DoubleMap JAVA_RUNTIME_ID_TO_HARDNESS = new Int2DoubleOpenHashMap();
     public static final Int2BooleanMap JAVA_RUNTIME_ID_TO_CAN_HARVEST_WITH_HAND = new Int2BooleanOpenHashMap();
@@ -153,38 +145,19 @@ public class BlockTranslator {
 
             JAVA_ID_BLOCK_MAP.put(javaId, javaBlockState);
 
+            // Used for adding all "special" Java block states to block state map
             String identifier;
             String bedrock_identifer = entry.getValue().get("bedrock_identifier").asText();
             for (Class<?> clazz : ref.getTypesAnnotatedWith(BlockEntity.class)) {
-                if (clazz.getAnnotation(BlockEntity.class).delay()) {
-                    identifier = clazz.getAnnotation(BlockEntity.class).regex();
-                    // Endswith, or else the block bedrock gets picked up for bed
-                    if (bedrock_identifer.endsWith(identifier)) {
-                        System.out.println("Putting " + javaId + " on the map because of " + identifier + " with Bedrock " + bedrock_identifer + ".");
-                        JAVA_ID_TO_BLOCK_ENTITY_MAP.put(javaBlockState, clazz.getAnnotation(BlockEntity.class).name());
-                        break;
-                    }
+                identifier = clazz.getAnnotation(BlockEntity.class).regex();
+                // Endswith, or else the block bedrock gets picked up for bed
+                if (bedrock_identifer.endsWith(identifier) && !identifier.equals("")) {
+                    JAVA_ID_TO_BLOCK_ENTITY_MAP.put(javaBlockState, clazz.getAnnotation(BlockEntity.class).name());
+                    break;
                 }
             }
 
-
-            JsonNode skullVariation = entry.getValue().get("variation");
-            if(skullVariation != null) {
-                SKULL_VARIANTS.put(javaBlockState, (byte) skullVariation.intValue());
-            }
-
-            JsonNode skullRotation = entry.getValue().get("skull_rotation");
-            if (skullRotation != null) {
-                SKULL_ROTATIONS.put(javaBlockState, (byte) skullRotation.intValue());
-            }
-
-            // If the Java ID is bed, signal that it needs a tag to show color
-            // The color is in the namespace ID in Java Edition but it's a tag in Bedrock.
-            JsonNode bedColor = entry.getValue().get("bed_color");
-            if (bedColor != null) {
-                // Converting to byte because the final tag value is a byte. bedColor.binaryValue() returns an array
-                BED_COLORS.put(javaBlockState, (byte) bedColor.intValue());
-            }
+            BlockStateValues.storeBlockStateValues(entry, javaBlockState);
 
             if ("minecraft:water[level=0]".equals(javaId)) {
                 waterRuntimeId = bedrockRuntimeId;
@@ -290,27 +263,6 @@ public class BlockTranslator {
 
     public static boolean isWaterlogged(BlockState state) {
         return WATERLOGGED.contains(state.getId());
-    }
-
-    public static byte getBedColor(BlockState state) {
-        if (BED_COLORS.containsKey(state)) {
-            return BED_COLORS.getByte(state);
-        }
-        return -1;
-    }
-
-    public static byte getSkullVariant(BlockState state) {
-        if (SKULL_VARIANTS.containsKey(state)) {
-            return SKULL_VARIANTS.getByte(state);
-        }
-        return -1;
-    }
-
-    public static byte getSkullRotation(BlockState state) {
-        if (SKULL_ROTATIONS.containsKey(state)) {
-            return SKULL_ROTATIONS.getByte(state);
-        }
-        return -1;
     }
 
     public static BlockState getJavaWaterloggedState(int bedrockId) {

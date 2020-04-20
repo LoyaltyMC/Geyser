@@ -85,7 +85,7 @@ public class JavaChunkDataTranslator extends PacketTranslator<ServerChunkDataPac
 
                 ByteBufOutputStream stream = new ByteBufOutputStream(Unpooled.buffer());
                 NBTOutputStream nbtStream = NbtUtils.createNetworkWriter(stream);
-                for (CompoundTag blockEntity : chunkData.blockEntities) {
+                for (CompoundTag blockEntity : chunkData.getBlockEntities()) {
                     nbtStream.write(blockEntity);
                 }
 
@@ -102,25 +102,15 @@ public class JavaChunkDataTranslator extends PacketTranslator<ServerChunkDataPac
                 levelChunkPacket.setData(payload);
                 session.getUpstream().sendPacket(levelChunkPacket);
 
-                for (Object2IntMap.Entry<CompoundTag> blockEntityEntry : chunkData.loadBlockEntitiesLater.object2IntEntrySet()) {
+                // Some block entities need to be loaded in later or else text doesn't show (signs) or they crash the game (end gateway blocks)
+                for (Object2IntMap.Entry<CompoundTag> blockEntityEntry : chunkData.getLoadBlockEntitiesLater().object2IntEntrySet()) {
                     int x = blockEntityEntry.getKey().getInt("x");
                     int y = blockEntityEntry.getKey().getInt("y");
                     int z = blockEntityEntry.getKey().getInt("z");
                     ChunkUtils.updateBlock(session, new BlockState(blockEntityEntry.getIntValue()), new Position(x, y, z));
                 }
-                chunkData.loadBlockEntitiesLater.clear();
+                chunkData.getLoadBlockEntitiesLater().clear();
 
-//
-//                for (Map.Entry<Position, BlockState> blockEntityEntry: chunkData.beds.entrySet()) {
-//                    ChunkUtils.updateBlock(session, blockEntityEntry.getValue(), blockEntityEntry.getKey());
-//                }
-//                for (Map.Entry<Position, BlockState> blockEntityEntry: chunkData.skulls.entrySet()) {
-//                    ChunkUtils.updateBlock(session, blockEntityEntry.getValue(), blockEntityEntry.getKey());
-//                }
-//                chunkData.signs.clear();
-//                chunkData.gateways.clear();
-//                chunkData.beds.clear();
-//                chunkData.skulls.clear();
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
