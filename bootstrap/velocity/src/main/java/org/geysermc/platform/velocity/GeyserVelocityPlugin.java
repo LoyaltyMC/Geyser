@@ -38,13 +38,14 @@ import org.geysermc.common.bootstrap.IGeyserBootstrap;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.utils.FileUtils;
 import org.geysermc.platform.velocity.command.GeyserVelocityCommandExecutor;
+import org.geysermc.platform.velocity.command.GeyserVelocityCommandManager;
 import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-@Plugin(id = "geyser", name = GeyserConnector.NAME + "-Velocity", version = GeyserConnector.VERSION, url = "https://geysermc.org", authors = "GeyserMC")
+@Plugin(id = "geyser", name = GeyserConnector.NAME + "-Velocity", version = GeyserConnector.VERSION_STATIC, url = "https://geysermc.org", authors = "GeyserMC")
 public class GeyserVelocityPlugin implements IGeyserBootstrap {
 
     @Inject
@@ -53,6 +54,7 @@ public class GeyserVelocityPlugin implements IGeyserBootstrap {
     @Inject
     private CommandManager commandManager;
 
+    private GeyserVelocityCommandManager geyserCommandManager;
     private GeyserVelocityConfiguration geyserConfig;
     private GeyserVelocityLogger geyserLogger;
 
@@ -74,6 +76,7 @@ public class GeyserVelocityPlugin implements IGeyserBootstrap {
         this.geyserLogger = new GeyserVelocityLogger(logger, geyserConfig.isDebugMode());
         this.connector = GeyserConnector.start(PlatformType.VELOCITY, this);
 
+        this.geyserCommandManager = new GeyserVelocityCommandManager(connector);
         this.commandManager.register(new GeyserVelocityCommandExecutor(connector), "geyser");
     }
 
@@ -90,6 +93,11 @@ public class GeyserVelocityPlugin implements IGeyserBootstrap {
     @Override
     public GeyserVelocityLogger getGeyserLogger() {
         return geyserLogger;
+    }
+
+    @Override
+    public org.geysermc.connector.command.CommandManager getGeyserCommandManager() {
+        return this.geyserCommandManager;
     }
 
     @Subscribe

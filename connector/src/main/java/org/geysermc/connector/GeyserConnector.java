@@ -36,7 +36,7 @@ import org.geysermc.common.IGeyserConfiguration;
 import org.geysermc.common.PlatformType;
 import org.geysermc.common.bootstrap.IGeyserBootstrap;
 import org.geysermc.common.logger.IGeyserLogger;
-import org.geysermc.connector.command.GeyserCommandMap;
+import org.geysermc.connector.command.CommandManager;
 import org.geysermc.connector.metrics.Metrics;
 import org.geysermc.connector.network.ConnectorServerEventHandler;
 import org.geysermc.connector.network.remote.RemoteServer;
@@ -45,10 +45,12 @@ import org.geysermc.connector.network.translators.Translators;
 import org.geysermc.connector.thread.PingPassthroughThread;
 import org.geysermc.connector.utils.Toolbox;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -59,8 +61,11 @@ public class GeyserConnector {
 
     public static final BedrockPacketCodec BEDROCK_PACKET_CODEC = Bedrock_v390.V390_CODEC;
 
+    public static final Properties GIT_PROPERTIES = loadGitProperties();
+
     public static final String NAME = "Geyser";
-    public static final String VERSION = "1.0-SNAPSHOT";
+    public static final String VERSION = getVersion();
+    public static final String VERSION_STATIC = "git";
 
     private final Map<InetSocketAddress, GeyserSession> players = new HashMap<>();
 
@@ -68,8 +73,6 @@ public class GeyserConnector {
 
     private RemoteServer remoteServer;
     private AuthType authType;
-
-    private GeyserCommandMap commandMap;
 
     private boolean shuttingDown = false;
 
@@ -107,7 +110,6 @@ public class GeyserConnector {
         Toolbox.init();
         Translators.start();
 
-        commandMap = new GeyserCommandMap(this);
         remoteServer = new RemoteServer(config.getRemote().getAddress(), config.getRemote().getPort());
         authType = AuthType.getByName(config.getRemote().getAuthType());
 
@@ -181,8 +183,7 @@ public class GeyserConnector {
         players.clear();
         remoteServer = null;
         authType = null;
-        commandMap.getCommands().clear();
-        commandMap = null;
+        this.getCommandManager().getCommands().clear();
 
         bootstrap.getGeyserLogger().info("Geyser shutdown successfully.");
     }
@@ -212,7 +213,40 @@ public class GeyserConnector {
         return bootstrap.getGeyserConfig();
     }
 
+    public CommandManager getCommandManager() {
+        return (CommandManager) bootstrap.getGeyserCommandManager();
+    }
+
     public static GeyserConnector getInstance() {
         return instance;
+    }
+
+    public static Properties loadGitProperties() {
+        InputStream gitPropertiesFile = GeyserConnector.class.getClassLoader().getResourceAsStream("git.properties");
+        if (gitPropertiesFile == null) { return null; }
+
+        Properties gitProperties = new Properties();
+        try {
+            gitProperties.load(gitPropertiesFile);
+        } catch (Exception e) {
+            getInstance().getLogger().debug("Failed to load git.properties");
+            return null;
+        }
+
+        return gitProperties;
+    }
+
+    private static String getVersion() {
+        String versionPrefix = "git-";
+
+        if (GIT_PROPERTIES != null) {
+            String commitID = GIT_PROPERTIES.getProperty("git.commit.id.abbrev");
+            String branch = GIT_PROPERTIES.getProperty("git.branch");
+            if (commitID != null) {
+                return versionPrefix + branch + "-" + commitID;
+            }
+        }
+
+        return versionPrefix + "unknown";
     }
 }

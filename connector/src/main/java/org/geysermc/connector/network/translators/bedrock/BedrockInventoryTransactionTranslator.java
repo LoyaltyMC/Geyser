@@ -66,6 +66,9 @@ public class BedrockInventoryTransactionTranslator extends PacketTranslator<Inve
             case ITEM_USE:
                 switch (packet.getActionType()) {
                     case 0:
+                        if(session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36).getId() == 829) {
+                            break;
+                        }
                         ClientPlayerPlaceBlockPacket blockPacket = new ClientPlayerPlaceBlockPacket(
                                 new Position(packet.getBlockPosition().getX(), packet.getBlockPosition().getY(), packet.getBlockPosition().getZ()),
                                 BlockFace.values()[packet.getFace()],
@@ -75,6 +78,9 @@ public class BedrockInventoryTransactionTranslator extends PacketTranslator<Inve
                         session.getDownstream().getSession().send(blockPacket);
                         break;
                     case 1:
+                        if(session.getInventory().getItem(session.getInventory().getHeldItemSlot() + 36).getId() == 829) {
+                            break;
+                        }
                         ClientPlayerUseItemPacket useItemPacket = new ClientPlayerUseItemPacket(Hand.MAIN_HAND);
                         session.getDownstream().getSession().send(useItemPacket);
                         break;
@@ -99,11 +105,23 @@ public class BedrockInventoryTransactionTranslator extends PacketTranslator<Inve
                 if (entity == null)
                     return;
 
-                Vector3f vector = packet.getClickPosition();
-                ClientPlayerInteractEntityPacket entityPacket = new ClientPlayerInteractEntityPacket((int) entity.getEntityId(),
-                        InteractAction.values()[packet.getActionType()], vector.getX(), vector.getY(), vector.getZ(), Hand.MAIN_HAND);
-
-                session.getDownstream().getSession().send(entityPacket);
+                //https://wiki.vg/Protocol#Interact_Entity
+                switch (packet.getActionType()) {
+                    case 0: //Interact
+                        Vector3f vector = packet.getClickPosition();
+                        ClientPlayerInteractEntityPacket interactPacket = new ClientPlayerInteractEntityPacket((int) entity.getEntityId(),
+                                InteractAction.INTERACT, Hand.MAIN_HAND);
+                        ClientPlayerInteractEntityPacket interactAtPacket = new ClientPlayerInteractEntityPacket((int) entity.getEntityId(),
+                                InteractAction.INTERACT_AT, vector.getX(), vector.getY(), vector.getZ(), Hand.MAIN_HAND);
+                        session.getDownstream().getSession().send(interactPacket);
+                        session.getDownstream().getSession().send(interactAtPacket);
+                        break;
+                    case 1: //Attack
+                        ClientPlayerInteractEntityPacket attackPacket = new ClientPlayerInteractEntityPacket((int) entity.getEntityId(),
+                                InteractAction.ATTACK);
+                        session.getDownstream().getSession().send(attackPacket);
+                        break;
+                }
                 break;
         }
     }
