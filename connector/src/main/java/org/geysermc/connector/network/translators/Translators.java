@@ -109,7 +109,6 @@ public class Translators {
         }
         
         itemTranslator = new ItemTranslator();
-        itemTranslator.init();
         BlockTranslator.init();
 
         registerBlockEntityTranslators();
