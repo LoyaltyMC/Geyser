@@ -23,29 +23,28 @@
  * @link https://github.com/GeyserMC/Geyser
  */
 
-package org.geysermc.connector.network.translators.block.entity;
+package org.geysermc.connector.command.defaults;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import org.geysermc.common.ChatColor;
+import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.command.CommandSender;
+import org.geysermc.connector.command.GeyserCommand;
+import org.geysermc.connector.network.session.GeyserSession;
 
-@Retention(value = RetentionPolicy.RUNTIME)
-public @interface BlockEntity {
+import java.util.stream.Collectors;
 
-    /**
-     * Whether to delay the sending of the block entity
-     * @return the delay for when sending the block entity
-     */
-    boolean delay();
+public class ListCommand extends GeyserCommand {
 
-    /**
-     * The block entity name
-     * @return the name of the block entity
-     */
-    String name();
+    private GeyserConnector connector;
 
-    /**
-     * The search term used in BlockTranslator
-     * @return the search term used in BlockTranslator
-     */
-    String regex();
+    public ListCommand(GeyserConnector connector, String name, String description, String permission) {
+        super(name, description, permission);
+
+        this.connector = connector;
+    }
+
+    @Override
+    public void execute(CommandSender sender, String[] args) {
+        sender.sendMessage(ChatColor.YELLOW + "Online Players (" + connector.getPlayers().size() + "): " + ChatColor.WHITE + connector.getPlayers().values().stream().map(GeyserSession::getName).collect(Collectors.joining(" ")));
+    }
 }
