@@ -66,7 +66,7 @@ public class ItemFrameEntity extends Entity {
     public void updateBedrockMetadata(EntityMetadata entityMetadata, GeyserSession session) {
         System.out.println(entityMetadata.getId() + " " + entityMetadata.getValue());
         if (entityMetadata.getId() == 7 && entityMetadata.getValue() != null) {
-            ItemData itemData = new ItemTranslator().translateToBedrock((ItemStack) entityMetadata.getValue());
+            ItemData itemData = new ItemTranslator().translateToBedrock((session, ItemStack) entityMetadata.getValue());
             CompoundTagBuilder builder = CompoundTag.builder();
 
             InputStream stream = Toolbox.getResource("bedrock/runtime_block_states.dat");
