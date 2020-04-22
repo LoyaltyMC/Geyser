@@ -31,6 +31,7 @@ import com.github.steveice10.mc.protocol.data.message.TextMessage;
 import com.nukkitx.math.vector.Vector3f;
 import com.nukkitx.protocol.bedrock.data.CommandPermission;
 import com.nukkitx.protocol.bedrock.data.EntityData;
+import com.nukkitx.protocol.bedrock.data.EntityLink;
 import com.nukkitx.protocol.bedrock.data.PlayerPermission;
 import com.nukkitx.protocol.bedrock.packet.AddPlayerPacket;
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket;
@@ -93,6 +94,11 @@ public class PlayerEntity extends LivingEntity {
         addPlayerPacket.setPlatformChatId("");
         addPlayerPacket.getMetadata().putAll(metadata);
 
+        long linkedEntityId = session.getEntityCache().getCachedPlayerEntityLink(entityId);
+        if (linkedEntityId != -1) {
+            addPlayerPacket.getEntityLinks().add(new EntityLink(session.getEntityCache().getEntityByJavaId(linkedEntityId).getGeyserId(), geyserId, EntityLink.Type.RIDER, false));
+        }
+
         valid = true;
         session.getUpstream().sendPacket(addPlayerPacket);
 
@@ -128,7 +134,7 @@ public class PlayerEntity extends LivingEntity {
     }
 
     @Override
-    public void moveAbsolute(GeyserSession session, Vector3f position, Vector3f rotation, boolean isOnGround) {
+    public void moveAbsolute(GeyserSession session, Vector3f position, Vector3f rotation, boolean isOnGround, boolean teleported) {
         setPosition(position);
         setRotation(rotation);
 
@@ -137,7 +143,13 @@ public class PlayerEntity extends LivingEntity {
         movePlayerPacket.setPosition(this.position);
         movePlayerPacket.setRotation(getBedrockRotation());
         movePlayerPacket.setOnGround(isOnGround);
-        movePlayerPacket.setMode(MovePlayerPacket.Mode.NORMAL);
+        movePlayerPacket.setMode(teleported ? MovePlayerPacket.Mode.TELEPORT : MovePlayerPacket.Mode.NORMAL);
+
+        if(teleported){
+            //movePlayerPacket.setRidingRuntimeEntityId(0);
+            movePlayerPacket.setTeleportationCause(MovePlayerPacket.TeleportationCause.UNKNOWN);
+            //movePlayerPacket.setEntityType(0);
+        }
 
         session.getUpstream().sendPacket(movePlayerPacket);
     }

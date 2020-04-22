@@ -42,7 +42,6 @@ import com.nukkitx.protocol.bedrock.data.*;
 import com.nukkitx.protocol.bedrock.packet.*;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -80,7 +79,7 @@ public class Entity {
 
     protected boolean valid;
 
-    protected LongSet passengers = new LongOpenHashSet();
+    protected LongOpenHashSet passengers = new LongOpenHashSet();
     protected Map<AttributeType, Attribute> attributes = new HashMap<>();
     protected EntityDataMap metadata = new EntityDataMap();
 
@@ -128,6 +127,9 @@ public class Entity {
     }
 
     /**
+     * Despawns the entity
+     *
+     * @param session The GeyserSession
      * @return can be deleted
      */
     public boolean despawnEntity(GeyserSession session) {
@@ -159,11 +161,11 @@ public class Entity {
         session.getUpstream().sendPacket(moveEntityPacket);
     }
 
-    public void moveAbsolute(GeyserSession session, Vector3f position, float yaw, float pitch, boolean isOnGround) {
-        moveAbsolute(session, position, Vector3f.from(yaw, pitch, yaw), isOnGround);
+    public void moveAbsolute(GeyserSession session, Vector3f position, float yaw, float pitch, boolean isOnGround, boolean teleported) {
+        moveAbsolute(session, position, Vector3f.from(yaw, pitch, yaw), isOnGround, teleported);
     }
 
-    public void moveAbsolute(GeyserSession session, Vector3f position, Vector3f rotation, boolean isOnGround) {
+    public void moveAbsolute(GeyserSession session, Vector3f position, Vector3f rotation, boolean isOnGround, boolean teleported) {
         setPosition(position);
         setRotation(rotation);
 
@@ -172,7 +174,7 @@ public class Entity {
         moveEntityPacket.setPosition(position);
         moveEntityPacket.setRotation(getBedrockRotation());
         moveEntityPacket.setOnGround(isOnGround);
-        moveEntityPacket.setTeleported(false);
+        moveEntityPacket.setTeleported(teleported);
 
         session.getUpstream().sendPacket(moveEntityPacket);
     }
@@ -270,6 +272,7 @@ public class Entity {
 
     /**
      * x = Pitch, y = HeadYaw, z = Yaw
+     * @return the bedrock rotation
      */
     public Vector3f getBedrockRotation() {
         return Vector3f.from(rotation.getY(), rotation.getZ(), rotation.getX());
