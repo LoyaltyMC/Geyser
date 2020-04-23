@@ -34,16 +34,7 @@ import com.nukkitx.nbt.NbtUtils;
 import com.nukkitx.nbt.stream.NBTInputStream;
 import com.nukkitx.nbt.tag.CompoundTag;
 import com.nukkitx.nbt.tag.ListTag;
-import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
-import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.geysermc.connector.GeyserConnector;
@@ -208,36 +199,6 @@ public class BlockTranslator {
 
         paletteList.addAll(blockStateMap.values()); // Add any missing mappings that could crash the client
 
-//        CompoundTagBuilder builder = CompoundTag.builder();
-//        builder.tag(CompoundTag.builder()
-//                .stringTag("name", "minecraft:frame")
-//                .intTag("version", BLOCK_STATE_VERSION)
-//                .tag(CompoundTag.builder()
-//                    .intTag("facing_direction", 0)
-//                    .byteTag("item_frame_map_bit", (byte) 0)
-//                    .build("states"))
-//                .build("block"));
-//        builder.shortTag("id", (short) 199);
-//        System.out.println(builder.buildRootTag());
-//
-//        System.out.println(bedrockRuntimeId);
-//        paletteList.add(builder.buildRootTag());
-//
-//        CompoundTagBuilder builder2 = CompoundTag.builder();
-//        builder2.tag(CompoundTag.builder()
-//                .stringTag("name", "minecraft:frame")
-//                .intTag("version", BLOCK_STATE_VERSION)
-//                .tag(CompoundTag.builder()
-//                        .intTag("facing_direction", 4)
-//                        .byteTag("item_frame_map_bit", (byte) 0)
-//                        .build("states"))
-//                .build("block"));
-//        builder2.shortTag("id", (short) 199);
-//        System.out.println(builder2.buildRootTag());
-//
-//        System.out.println(bedrockRuntimeId + 1);
-//        paletteList.add(builder2.buildRootTag());
-
         int frameRuntimeId = 0;
         for (CompoundTag tag : paletteList) {
             CompoundTag blockTag = tag.getCompound("block");
@@ -302,6 +263,10 @@ public class BlockTranslator {
 
     public static int getItemFrame(CompoundTag tag) {
         return ITEM_FRAMES.getOrDefault(tag, -1);
+    }
+
+    public static boolean isItemFrame(int bedrockBlockRuntimeId) {
+        return ITEM_FRAMES.values().contains(bedrockBlockRuntimeId);
     }
 
     public static int getBlockStateVersion() {
