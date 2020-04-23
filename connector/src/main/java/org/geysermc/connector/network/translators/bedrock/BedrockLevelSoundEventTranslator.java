@@ -23,27 +23,19 @@
  * @link https://github.com/GeyserMC/Geyser
  */
 
-package org.geysermc.connector.network.translators.item;
+package org.geysermc.connector.network.translators.bedrock;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.nukkitx.protocol.bedrock.packet.LevelSoundEventPacket;
+import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.PacketTranslator;
+import org.geysermc.connector.network.translators.Translator;
 
-@Getter
-@AllArgsConstructor
-public class ItemEntry {
-
-    public static ItemEntry AIR = new ItemEntry("minecraft:air", 0, 0, 0, false);
-
-    private final String javaIdentifier;
-    private final int javaId;
-
-    private final int bedrockId;
-    private final int bedrockData;
-
-    private final boolean block;
+@Translator(packet = LevelSoundEventPacket.class)
+public class BedrockLevelSoundEventTranslator extends PacketTranslator<LevelSoundEventPacket> {
 
     @Override
-    public boolean equals(Object obj) {
-        return obj == this || (obj instanceof ItemEntry && ((ItemEntry) obj).getBedrockId() == this.getBedrockId() && ((ItemEntry) obj).getJavaIdentifier().equals(this.getJavaIdentifier()));
+    public void translate(LevelSoundEventPacket packet, GeyserSession session) {
+        // lol what even :thinking:
+        session.getUpstream().sendPacket(packet);
     }
 }

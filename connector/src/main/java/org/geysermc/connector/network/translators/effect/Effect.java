@@ -23,27 +23,21 @@
  * @link https://github.com/GeyserMC/Geyser
  */
 
-package org.geysermc.connector.network.translators.item;
+package org.geysermc.connector.network.translators.effect;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 @AllArgsConstructor
-public class ItemEntry {
+public class Effect {
 
-    public static ItemEntry AIR = new ItemEntry("minecraft:air", 0, 0, 0, false);
+    private String javaName;
+    private String bedrockName;
+    private String type;
+    private int data;
+    private String identifier;
 
-    private final String javaIdentifier;
-    private final int javaId;
-
-    private final int bedrockId;
-    private final int bedrockData;
-
-    private final boolean block;
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this || (obj instanceof ItemEntry && ((ItemEntry) obj).getBedrockId() == this.getBedrockId() && ((ItemEntry) obj).getJavaIdentifier().equals(this.getJavaIdentifier()));
-    }
 }
