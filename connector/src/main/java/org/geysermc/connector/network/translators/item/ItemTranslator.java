@@ -42,9 +42,12 @@ import java.util.stream.Collectors;
 
 public class ItemTranslator {
 
-    private static final Int2ObjectMap<ItemStackTranslator> itemTranslators = new Int2ObjectOpenHashMap<>();
-    private static List<NbtItemStackTranslator> nbtItemTranslators = new ArrayList<>();
-    private static final Map<String, ItemEntry> javaIdentifierMap = new HashMap<>();
+    private Int2ObjectMap<ItemStackTranslator> itemTranslators = new Int2ObjectOpenHashMap();
+    private List<NbtItemStackTranslator> nbtItemTranslators;
+    private Map<String, ItemEntry> javaIdentifierMap = new HashMap<>();
+	
+	// Shield ID, used in Entity.java
+    public static final int SHIELD = 829;
 
     public static void init() {
         Reflections ref = new Reflections("org.geysermc.connector.network.translators.item");
