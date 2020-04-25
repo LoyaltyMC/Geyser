@@ -58,6 +58,7 @@ import org.geysermc.connector.network.translators.Translator;
 import org.geysermc.connector.network.translators.Translators;
 import org.geysermc.connector.network.translators.item.ItemEntry;
 import org.geysermc.connector.utils.InventoryUtils;
+import org.geysermc.connector.network.translators.block.BlockTranslator;
 
 @Translator(packet = InventoryTransactionPacket.class)
 public class BedrockInventoryTransactionTranslator extends PacketTranslator<InventoryTransactionPacket> {
