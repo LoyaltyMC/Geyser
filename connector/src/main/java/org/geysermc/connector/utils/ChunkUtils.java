@@ -41,6 +41,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import lombok.Getter;
 import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.entity.Entity;
+import org.geysermc.connector.entity.ItemFrameEntity;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.block.entity.*;
 import org.geysermc.connector.network.translators.Translators;
@@ -53,6 +55,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static org.geysermc.connector.network.translators.block.BlockTranslator.AIR;
 import static org.geysermc.connector.network.translators.block.BlockTranslator.BEDROCK_WATER_ID;
 
 public class ChunkUtils {
@@ -152,6 +155,20 @@ public class ChunkUtils {
     }
 
     public static void updateBlock(GeyserSession session, BlockState blockState, Vector3i position) {
+
+        // Checks for item frames so they aren't tripped up and removed
+        if (ItemFrameEntity.positionContainsItemFrame(position) && blockState.equals(AIR)) {
+            ((ItemFrameEntity) session.getEntityCache().getEntityByJavaId(ItemFrameEntity.getItemFrameEntityId(position))).updateBlock(session);
+            return;
+        } else if (ItemFrameEntity.positionContainsItemFrame(position)) {
+            Entity entity = session.getEntityCache().getEntityByJavaId(ItemFrameEntity.getItemFrameEntityId(position));
+            if (entity != null) {
+                session.getEntityCache().removeEntity(entity, false);
+            } else {
+                ItemFrameEntity.removePosition(position);
+            }
+        }
+
         int blockId = BlockTranslator.getBedrockBlockId(blockState);
 
         UpdateBlockPacket updateBlockPacket = new UpdateBlockPacket();

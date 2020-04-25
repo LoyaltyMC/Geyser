@@ -1,3 +1,28 @@
+/*
+ * Copyright (c) 2019-2020 GeyserMC. http://geysermc.org
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * @author GeyserMC
+ * @link https://github.com/GeyserMC/Geyser
+ */
+
 package org.geysermc.connector.entity;
 
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.EntityMetadata;
@@ -37,16 +62,16 @@ public class ItemFrameEntity extends Entity {
      * Used for getting the Bedrock block position.
      * Blocks deal with integers whereas entities deal with floats.
      */
-    Vector3i bedrockPosition;
+    private final Vector3i bedrockPosition;
     /**
      * Specific block 'state' we are emulating in Bedrock.
      */
-    int bedrockRuntimeId;
+    private final int bedrockRuntimeId;
     /**
      * Rotation of item in frame
      */
-    float rotation = 0.0f;
-    CompoundTag cachedTag;
+    private float rotation = 0.0f;
+    private CompoundTag cachedTag;
 
     public ItemFrameEntity(long entityId, long geyserId, EntityType entityType, Vector3f position, Vector3f motion, Vector3f rotation, HangingDirection direction) {
         super(entityId, geyserId, entityType, position, motion, rotation);
@@ -67,13 +92,13 @@ public class ItemFrameEntity extends Entity {
 
     @Override
     public void spawnEntity(GeyserSession session) {
-        updateBlock(session, null);
-        session.getConnector().getLogger().debug("Spawned item frame at location " + position + " with java id " + entityId);
+        updateBlock(session);
+        valid = true;
+        session.getConnector().getLogger().debug("Spawned item frame at location " + bedrockPosition + " with java id " + entityId);
     }
 
     @Override
     public void updateBedrockMetadata(EntityMetadata entityMetadata, GeyserSession session) {
-        System.out.println(entityMetadata.getId() + " " + entityMetadata.getValue());
         if (entityMetadata.getId() == 7 && entityMetadata.getValue() != null) {
             ItemData itemData = ItemTranslator.translateToBedrock(session, (ItemStack) entityMetadata.getValue());
             ItemEntry itemEntry = ItemTranslator.getItem((ItemStack) entityMetadata.getValue());
@@ -89,7 +114,6 @@ public class ItemFrameEntity extends Entity {
 
             builder.byteTag("Count", (byte) itemData.getCount());
             if (itemData.getTag() != null) {
-                System.out.println(itemData.getTag().toBuilder().build("tag"));
                 builder.tag(itemData.getTag().toBuilder().build("tag"));
             }
             builder.shortTag("Damage", itemData.getDamage());
@@ -99,21 +123,26 @@ public class ItemFrameEntity extends Entity {
             tag.floatTag("ItemDropChance", 1.0f);
             tag.floatTag("ItemRotation", rotation);
             cachedTag = tag.buildRootTag();
-            updateBlock(session, tag.buildRootTag());
-        } else if (entityMetadata.getId() == 7 && entityMetadata.getValue() == null && cachedTag != null) {
+            updateBlock(session);
+        }
+        else if (entityMetadata.getId() == 7 && entityMetadata.getValue() == null && cachedTag != null) {
             cachedTag = getDefaultTag();
-            updateBlock(session, null);
-        } else if (entityMetadata.getId() == 8) {
+            updateBlock(session);
+        }
+        else if (entityMetadata.getId() == 8) {
             rotation = ((int) entityMetadata.getValue()) * 45;
             if (cachedTag == null) {
                 session.getConnector().getLogger().warning("Cached item frame tag is null at " + bedrockPosition.toString());
+                updateBlock(session);
                 return;
             }
             CompoundTagBuilder builder = cachedTag.toBuilder();
             builder.floatTag("ItemRotation", rotation);
-            updateBlock(session, builder.buildRootTag());
-        } else {
-            updateBlock(session, null);
+            cachedTag = builder.buildRootTag();
+            updateBlock(session);
+        }
+        else {
+            updateBlock(session);
         }
     }
 
@@ -128,6 +157,7 @@ public class ItemFrameEntity extends Entity {
         updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.NEIGHBORS);
         session.getUpstream().sendPacket(updateBlockPacket);
         POSITION_TO_ENTITY_ID.remove(position, entityId);
+        valid = false;
         return true;
     }
 
@@ -141,7 +171,11 @@ public class ItemFrameEntity extends Entity {
         return builder.buildRootTag();
     }
 
-    private void updateBlock(GeyserSession session, CompoundTag tag) {
+    /**
+     * Updates the item frame as a block
+     * @param session GeyserSession
+     */
+    public void updateBlock(GeyserSession session) {
         UpdateBlockPacket updateBlockPacket = new UpdateBlockPacket();
         updateBlockPacket.setDataLayer(0);
         updateBlockPacket.setBlockPosition(bedrockPosition);
@@ -160,14 +194,12 @@ public class ItemFrameEntity extends Entity {
 
         BlockEntityDataPacket blockEntityDataPacket = new BlockEntityDataPacket();
         blockEntityDataPacket.setBlockPosition(bedrockPosition);
-        if (tag != null) {
-            blockEntityDataPacket.setData(tag);
-        } else if (cachedTag != null) {
+        if (cachedTag != null) {
             blockEntityDataPacket.setData(cachedTag);
         } else {
             blockEntityDataPacket.setData(getDefaultTag());
         }
-        System.out.println(blockEntityDataPacket);
+
         session.getUpstream().sendPacket(blockEntityDataPacket);
     }
 
@@ -178,5 +210,24 @@ public class ItemFrameEntity extends Entity {
      */
     public static long getItemFrameEntityId(Vector3i position) {
         return POSITION_TO_ENTITY_ID.getOrDefault(position, -1);
+    }
+
+    /**
+     * Determines if the position contains an item frame.
+     * Does largely the same thing as getItemFrameEntityId, but for speed purposes is implemented separately,
+     * since every block destroy packet has to check for an item frame.
+     * @param position position of block
+     * @return true if position contains item frame, false if not
+     */
+    public static boolean positionContainsItemFrame(Vector3i position) {
+        return POSITION_TO_ENTITY_ID.containsKey(position);
+    }
+
+    /**
+     * Force-remove from the position-to-ID map so it doesn't cause conflicts.
+     * @param position position of the removed item frame
+     */
+    public static void removePosition(Vector3i position) {
+        POSITION_TO_ENTITY_ID.remove(position);
     }
 }
