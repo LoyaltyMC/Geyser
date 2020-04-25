@@ -49,7 +49,7 @@ public class ItemTranslator {
 	// Shield ID, used in Entity.java
     public static final int SHIELD = 829;
 
-    public void init() {
+    public static void init() {
         Reflections ref = new Reflections("org.geysermc.connector.network.translators.item");
 
         Map<NbtItemStackTranslator, Integer> loadedNbtItemTranslators = new HashMap<>();
@@ -84,7 +84,7 @@ public class ItemTranslator {
                 .sorted(Comparator.comparingInt(value -> loadedNbtItemTranslators.get(value))).collect(Collectors.toList());
     }
 
-    public ItemStack translateToJava(GeyserSession session, ItemData data) {
+    public static ItemStack translateToJava(GeyserSession session, ItemData data) {
         if (data == null) {
             return new ItemStack(0);
         }
@@ -109,14 +109,14 @@ public class ItemTranslator {
         return itemStack;
     }
 
-    public ItemData translateToBedrock(GeyserSession session, ItemStack stack) {
+    public static ItemData translateToBedrock(GeyserSession session, ItemStack stack) {
         if (stack == null) {
             return ItemData.AIR;
         }
 
         ItemEntry bedrockItem = getItem(stack);
 
-        if (stack != null && stack.getNbt() != null) {
+        if (stack.getNbt() != null) {
             for (NbtItemStackTranslator translator : nbtItemTranslators) {
                 if (translator.acceptItem(bedrockItem)) {
                     translator.translateToBedrock(stack.getNbt(), bedrockItem);
@@ -132,11 +132,11 @@ public class ItemTranslator {
         }
     }
 
-    public ItemEntry getItem(ItemStack stack) {
+    public static ItemEntry getItem(ItemStack stack) {
         return Toolbox.ITEM_ENTRIES.get(stack.getId());
     }
 
-    public ItemEntry getItem(ItemData data) {
+    public static ItemEntry getItem(ItemData data) {
         for (ItemEntry itemEntry : Toolbox.ITEM_ENTRIES.values()) {
             if (itemEntry.getBedrockId() == data.getId() && (itemEntry.getBedrockData() == data.getDamage() || itemEntry.getJavaIdentifier().endsWith("potion"))) {
                 return itemEntry;
