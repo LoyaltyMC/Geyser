@@ -84,7 +84,7 @@ public class PlayerEntity extends LivingEntity {
         addPlayerPacket.setUsername(username);
         addPlayerPacket.setRuntimeEntityId(geyserId);
         addPlayerPacket.setUniqueEntityId(geyserId);
-        addPlayerPacket.setPosition(position);
+        addPlayerPacket.setPosition(position.clone().sub(0, EntityType.PLAYER.getOffset(), 0));
         addPlayerPacket.setRotation(getBedrockRotation());
         addPlayerPacket.setMotion(motion);
         addPlayerPacket.setHand(hand);
@@ -145,10 +145,8 @@ public class PlayerEntity extends LivingEntity {
         movePlayerPacket.setOnGround(isOnGround);
         movePlayerPacket.setMode(teleported ? MovePlayerPacket.Mode.TELEPORT : MovePlayerPacket.Mode.NORMAL);
 
-        if(teleported){
-            //movePlayerPacket.setRidingRuntimeEntityId(0);
+        if (teleported) {
             movePlayerPacket.setTeleportationCause(MovePlayerPacket.TeleportationCause.UNKNOWN);
-            //movePlayerPacket.setEntityType(0);
         }
 
         session.getUpstream().sendPacket(movePlayerPacket);

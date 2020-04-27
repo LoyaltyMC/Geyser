@@ -101,6 +101,7 @@ public class BannerBlockEntityTranslator extends BlockEntityTranslator implement
 
         return CompoundTagBuilder.builder()
                 .intTag("Color", 15 - (int) pattern.get("Color").getValue())
+                .stringTag("Pattern", (String) pattern.get("Pattern").getValue())
                 .stringTag("Pattern", patternName)
                 .buildRootTag();
     }
