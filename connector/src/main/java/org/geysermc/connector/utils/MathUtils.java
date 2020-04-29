@@ -37,15 +37,4 @@ public class MathUtils {
         int truncated = (int) floatNumber;
         return floatNumber > truncated ? truncated + 1 : truncated;
     }
-
-    public static double constrain(double num, double min, double max) {
-        if(num > max) {
-            num = max;
-        }
-        if(num < min) {
-            num = min;
-        }
-
-        return num;
-    }
 }

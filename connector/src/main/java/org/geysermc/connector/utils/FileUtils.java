@@ -25,9 +25,6 @@
 
 package org.geysermc.connector.utils;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.geysermc.connector.GeyserConnector;
@@ -50,16 +47,6 @@ public class FileUtils {
      */
     public static <T> T loadConfig(File src, Class<T> valueType) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        return objectMapper.readValue(src, valueType);
-    }
-
-    public static <T> T loadYaml(InputStream src, Class<T> valueType) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory()).enable(JsonParser.Feature.IGNORE_UNDEFINED).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        return objectMapper.readValue(src, valueType);
-    }
-
-    public static <T> T loadJson(InputStream src, Class<T> valueType) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper(new JsonFactory()).enable(JsonParser.Feature.IGNORE_UNDEFINED).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         return objectMapper.readValue(src, valueType);
     }
 

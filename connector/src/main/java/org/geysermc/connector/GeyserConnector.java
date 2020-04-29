@@ -42,7 +42,6 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.Translators;
 import org.geysermc.connector.network.translators.world.WorldManager;
 import org.geysermc.connector.thread.PingPassthroughThread;
-import org.geysermc.connector.utils.ResourcePack;
 import org.geysermc.connector.utils.Toolbox;
 
 import java.io.InputStream;
@@ -107,9 +106,8 @@ public class GeyserConnector {
 
         logger.setDebug(config.isDebugMode());
 
-        Translators.start();
         Toolbox.init();
-        ResourcePack.loadPacks();
+        Translators.start();
 
         remoteServer = new RemoteServer(config.getRemote().getAddress(), config.getRemote().getPort());
         authType = AuthType.getByName(config.getRemote().getAuthType());
