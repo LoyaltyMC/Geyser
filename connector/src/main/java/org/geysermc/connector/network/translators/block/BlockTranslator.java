@@ -78,6 +78,7 @@ public class BlockTranslator {
         ListTag<CompoundTag> blocksTag;
         try (NBTInputStream nbtInputStream = NbtUtils.createNetworkReader(stream)) {
             blocksTag = (ListTag<CompoundTag>) nbtInputStream.readTag();
+            //Blocks.registerBlocks(new File("mods"));
         } catch (Exception e) {
             throw new AssertionError("Unable to get blocks from runtime block states", e);
         }
