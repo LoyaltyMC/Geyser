@@ -31,7 +31,7 @@ import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
 import com.nukkitx.math.vector.Vector3i;
 import com.nukkitx.protocol.bedrock.packet.BlockEventPacket;
 import org.geysermc.connector.network.session.GeyserSession;
-import org.geysermc.connector.network.translators.block.BlockStateValues;
+import org.geysermc.connector.network.translators.world.block.BlockStateValues;
 import org.geysermc.connector.utils.ChunkUtils;
 
 /**
