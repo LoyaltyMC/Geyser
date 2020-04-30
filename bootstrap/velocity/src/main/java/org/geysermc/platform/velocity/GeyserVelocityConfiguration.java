@@ -112,10 +112,7 @@ public class GeyserVelocityConfiguration implements GeyserConfiguration {
     @Getter
     public static class RemoteConfiguration implements IRemoteConfiguration {
 
-        @Setter
         private String address;
-
-        @Setter
         private int port;
 
         private String motd1;
