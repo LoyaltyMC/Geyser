@@ -25,6 +25,7 @@
 
 package org.geysermc.platform.bukkit;
 
+import org.bukkit.plugin.Plugin;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.geysermc.connector.GeyserConfiguration;
