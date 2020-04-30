@@ -45,8 +45,8 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.world.block.entity.*;
 import org.geysermc.connector.network.translators.Translators;
 import org.geysermc.connector.network.translators.world.block.BlockTranslator;
-import org.geysermc.connector.world.chunk.ChunkPosition;
-import org.geysermc.connector.world.chunk.ChunkSection;
+import org.geysermc.connector.network.translators.world.chunk.ChunkPosition;
+import org.geysermc.connector.network.translators.world.chunk.ChunkSection;
 import org.reflections.Reflections;
 
 import java.util.HashMap;

@@ -33,6 +33,7 @@ import com.nukkitx.protocol.bedrock.packet.BlockEventPacket;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.world.block.BlockStateValues;
 import org.geysermc.connector.utils.ChunkUtils;
+import org.geysermc.connector.network.translators.world.block.entity.RequiresBlockState;
 
 /**
  * Does not implement BlockEntityTranslator because it's only a block entity in Bedrock
@@ -49,7 +50,7 @@ public class NoteblockBlockEntityTranslator implements RequiresBlockState {
         BlockEventPacket blockEventPacket = new BlockEventPacket();
         blockEventPacket.setBlockPosition(Vector3i.from(position.getX(), position.getY(), position.getZ()));
         blockEventPacket.setEventType(0);
-        blockEventPacket.setEventData(BlockStateValues.getNoteblockPitch(blockState));
+        blockEventPacket.setEventData(BlockStateValues.getNoteblockPitch(blockState)); //RequiresBlockState
         session.getUpstream().sendPacket(blockEventPacket);
 
         ChunkUtils.CACHED_BLOCK_ENTITIES.remove(position);
