@@ -41,6 +41,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.network.translators.item.ItemEntry;
 import org.geysermc.connector.network.translators.item.ToolItemEntry;
+import org.geysermc.connector.network.translators.sound.SoundHandlerRegistry;
 
 import java.io.*;
 import java.util.*;
@@ -145,6 +146,9 @@ public class Toolbox {
         SoundUtils.init();
         // Load the locale data
         LocaleUtils.init();
+
+        // Load sound handlers
+        SoundHandlerRegistry.init();
 
         /* Load creative items */
         stream = getResource("bedrock/creative_items.json");

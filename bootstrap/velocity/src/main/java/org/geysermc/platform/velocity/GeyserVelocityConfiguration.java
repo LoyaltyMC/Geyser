@@ -27,14 +27,12 @@ package org.geysermc.platform.velocity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.velocitypowered.api.plugin.PluginContainer;
-import com.velocitypowered.api.proxy.ProxyServer;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.geysermc.common.IGeyserConfiguration;
 
-import java.io.File;
-import java.nio.file.Files;
+import org.geysermc.connector.GeyserConfiguration;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -42,7 +40,7 @@ import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
-public class GeyserVelocityConfiguration implements IGeyserConfiguration {
+public class GeyserVelocityConfiguration implements GeyserConfiguration {
 
     private BedrockConfiguration bedrock;
     private RemoteConfiguration remote;
@@ -69,6 +67,9 @@ public class GeyserVelocityConfiguration implements IGeyserConfiguration {
 
     @JsonProperty("default-locale")
     private String defaultLocale;
+
+    @JsonProperty("cache-chunks")
+    private boolean cacheChunks;
 
     private MetricsInfo metrics;
 

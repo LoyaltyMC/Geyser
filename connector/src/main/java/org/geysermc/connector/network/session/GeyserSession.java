@@ -31,6 +31,7 @@ import com.github.steveice10.mc.auth.exception.request.RequestException;
 import com.github.steveice10.mc.protocol.MinecraftProtocol;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket;
+import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerRespawnPacket;
 import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
 import com.github.steveice10.mc.protocol.packet.handshake.client.HandshakePacket;
@@ -63,7 +64,7 @@ import org.geysermc.connector.network.session.auth.AuthData;
 import org.geysermc.connector.network.session.auth.BedrockClientData;
 import org.geysermc.connector.network.session.cache.*;
 import org.geysermc.connector.network.translators.Registry;
-import org.geysermc.connector.network.translators.block.BlockTranslator;
+import org.geysermc.connector.network.translators.world.block.BlockTranslator;
 import org.geysermc.connector.utils.ChunkUtils;
 import org.geysermc.connector.utils.LocaleUtils;
 import org.geysermc.connector.utils.Toolbox;
@@ -118,6 +119,10 @@ public class GeyserSession implements CommandSender {
     private GameMode gameMode = GameMode.SURVIVAL;
 
     private final AtomicInteger pendingDimSwitches = new AtomicInteger(0);
+
+    @Setter
+    private boolean sneaking;
+
     @Setter
     private boolean sprinting;
 
@@ -132,6 +137,12 @@ public class GeyserSession implements CommandSender {
 
     @Setter
     private String lastBlockPlacedId;
+
+    @Setter
+    private boolean interacting;
+
+    @Setter
+    private Vector3i lastInteractionPosition;
 
     @Setter
     private boolean switchingDimension = false;
@@ -342,10 +353,11 @@ public class GeyserSession implements CommandSender {
             }
         }
 
-        this.entityCache.getEntities().clear();
-        this.scoreboardCache.removeScoreboard();
-        this.inventoryCache.getInventories().clear();
-        this.windowCache.getWindows().clear();
+        this.chunkCache = null;
+        this.entityCache = null;
+        this.scoreboardCache = null;
+        this.inventoryCache = null;
+        this.windowCache = null;
 
         closed = true;
     }

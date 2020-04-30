@@ -26,8 +26,7 @@
 package org.geysermc.connector.network.translators.java.entity.player;
 
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.ItemStack;
-import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
-import com.github.steveice10.mc.protocol.data.game.world.particle.BlockParticleData;
+import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerActionAckPacket;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import com.nukkitx.math.vector.Vector3f;
@@ -37,7 +36,7 @@ import org.geysermc.connector.inventory.PlayerInventory;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translators;
-import org.geysermc.connector.network.translators.block.BlockTranslator;
+import org.geysermc.connector.network.translators.world.block.BlockTranslator;
 import org.geysermc.connector.network.translators.item.ItemEntry;
 import org.geysermc.connector.network.translators.item.ItemTranslator;
 import org.geysermc.connector.utils.BlockUtils;
@@ -52,21 +51,27 @@ public class JavaPlayerActionAckTranslator extends PacketTranslator<ServerPlayer
         LevelEventPacket levelEvent = new LevelEventPacket();
         switch (packet.getAction()) {
             case FINISH_DIGGING:
-                levelEvent.setType(LevelEventType.DESTROY);
-                levelEvent.setPosition(Vector3f.from(packet.getPosition().getX(), packet.getPosition().getY(), packet.getPosition().getZ()));
-                levelEvent.setData(BlockTranslator.getBedrockBlockId(session.getBreakingBlock()));
-                session.getUpstream().sendPacket(levelEvent);
-                session.setBreakingBlock(null);
+                double blockHardness = BlockTranslator.JAVA_RUNTIME_ID_TO_HARDNESS.get(session.getBreakingBlock() == null ? 0 : session.getBreakingBlock().getId());
+                if (session.getGameMode() != GameMode.CREATIVE && blockHardness != 0) {
+                    levelEvent.setType(LevelEventType.DESTROY);
+                    levelEvent.setPosition(Vector3f.from(packet.getPosition().getX(), packet.getPosition().getY(), packet.getPosition().getZ()));
+                    levelEvent.setData(BlockTranslator.getBedrockBlockId(session.getBreakingBlock()));
+                    session.getUpstream().sendPacket(levelEvent);
+                    session.setBreakingBlock(null);
+                }
                 ChunkUtils.updateBlock(session, packet.getNewState(), packet.getPosition());
                 break;
             case START_DIGGING:
+                if (session.getGameMode() == GameMode.CREATIVE) {
+                    break;
+                }
+                blockHardness = BlockTranslator.JAVA_RUNTIME_ID_TO_HARDNESS.get(packet.getNewState().getId());
                 levelEvent.setType(LevelEventType.BLOCK_START_BREAK);
                 levelEvent.setPosition(Vector3f.from(
                         packet.getPosition().getX(),
                         packet.getPosition().getY(),
                         packet.getPosition().getZ()
                 ));
-                double blockHardness = BlockTranslator.JAVA_RUNTIME_ID_TO_HARDNESS.get(packet.getNewState().getId());
                 PlayerInventory inventory = session.getInventory();
                 ItemStack item = inventory.getItemInHand();
                 ItemEntry itemEntry = null;
