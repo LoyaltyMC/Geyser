@@ -41,15 +41,3 @@ jobs:
         with:
           name: Geyser BungeeCord
           path: bootstrap/bungeecord/target/Geyser-BungeeCord.jar
-      - name: Archive artifacts (Geyser Sponge)
-        uses: actions/upload-artifact@v1
-        if: success()
-        with:
-          name: Geyser Sponge
-          path: bootstrap/sponge/target/Geyser-Sponge.jar
-      - name: Archive artifacts (Geyser Velocity)
-        uses: actions/upload-artifact@v1
-        if: success()
-        with:
-          name: Geyser Velocity
-          path: bootstrap/velocity/target/Geyser-Velocity.jar
