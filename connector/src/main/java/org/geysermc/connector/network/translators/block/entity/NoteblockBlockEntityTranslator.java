@@ -50,7 +50,7 @@ public class NoteblockBlockEntityTranslator implements RequiresBlockState {
         BlockEventPacket blockEventPacket = new BlockEventPacket();
         blockEventPacket.setBlockPosition(Vector3i.from(position.getX(), position.getY(), position.getZ()));
         blockEventPacket.setEventType(0);
-        blockEventPacket.setEventData(BlockStateValues.getNoteblockPitch(blockState)); //RequiresBlockState
+        blockEventPacket.setEventData(BlockStateValues.getNoteblockPitch(blockState));
         session.getUpstream().sendPacket(blockEventPacket);
 
         ChunkUtils.CACHED_BLOCK_ENTITIES.remove(position);
