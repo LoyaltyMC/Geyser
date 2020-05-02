@@ -36,7 +36,6 @@ import org.geysermc.connector.GeyserConfiguration;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
@@ -73,30 +72,9 @@ public class GeyserVelocityConfiguration implements GeyserConfiguration {
 
     private MetricsInfo metrics;
 
-    private Path floodgateKey;
-
-    public void loadFloodgate(GeyserVelocityPlugin plugin, ProxyServer proxyServer, File dataFolder) {
-        // Paths.get(floodgateKeyFile)
-        floodgateKey = Paths.get(dataFolder.toString(), floodgateKeyFile.isEmpty() ? floodgateKeyFile : "public-key.pem");
-        if (!Files.exists(floodgateKey) && getRemote().getAuthType().equals("floodgate")) {
-            Optional<PluginContainer> floodgate = proxyServer.getPluginManager().getPlugin("floodgate");
-            if (floodgate != null && floodgate.isPresent()) {
-                Path autoKey = Paths.get("plugins/floodgate/", "public-key.pem");
-                if (Files.exists(autoKey)) {
-                    plugin.getGeyserLogger().info("Auto-loaded floodgate key");
-                    floodgateKey = autoKey;
-                } else {
-                    plugin.getGeyserLogger().error("Auth-type set to floodgate and the public key is missing!");
-                }
-            } else {
-                plugin.getGeyserLogger().error("Auth-type set to floodgate but floodgate is not installed!");
-            }
-        }
-    }
-
     @Override
     public Path getFloodgateKeyFile() {
-        return floodgateKey;
+        return Paths.get(floodgateKeyFile);
     }
 
     @Getter
@@ -112,7 +90,10 @@ public class GeyserVelocityConfiguration implements GeyserConfiguration {
     @Getter
     public static class RemoteConfiguration implements IRemoteConfiguration {
 
+        @Setter
         private String address;
+
+        @Setter
         private int port;
 
         private String motd1;

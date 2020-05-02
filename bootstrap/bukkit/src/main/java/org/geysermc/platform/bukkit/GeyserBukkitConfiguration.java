@@ -25,13 +25,10 @@
 
 package org.geysermc.platform.bukkit;
 
-import org.bukkit.plugin.Plugin;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.geysermc.connector.GeyserConfiguration;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -48,8 +45,6 @@ public class GeyserBukkitConfiguration implements GeyserConfiguration {
 
     private Map<String, BukkitUserAuthenticationInfo> userAuthInfo = new HashMap<>();
 
-    private Path floodgateKey;
-
     public GeyserBukkitConfiguration(File dataFolder, FileConfiguration config) {
         this.dataFolder = dataFolder;
         this.config = config;
@@ -63,24 +58,6 @@ public class GeyserBukkitConfiguration implements GeyserConfiguration {
 
         for (String key : config.getConfigurationSection("userAuths").getKeys(false)) {
             userAuthInfo.put(key, new BukkitUserAuthenticationInfo(key));
-        }
-    }
-
-    public void loadFloodgate(GeyserBukkitPlugin plugin) {
-        floodgateKey = Paths.get(dataFolder.toString(), config.getString("floodgate-key-file", "public-key.pem"));
-        if (!Files.exists(floodgateKey) && getRemote().getAuthType().equals("floodgate")) {
-            Plugin floodgate = Bukkit.getPluginManager().getPlugin("floodgate-bukkit");
-            if (floodgate != null) {
-                Path autoKey = floodgate.getDataFolder().toPath().resolve("public-key.pem");
-                if (Files.exists(autoKey)) {
-                    plugin.getGeyserLogger().info("Auto-loaded floodgate key");
-                    floodgateKey = autoKey;
-                } else {
-                    plugin.getGeyserLogger().error("Auth-type set to floodgate and the public key is missing!");
-                }
-            } else {
-                plugin.getGeyserLogger().error("Auth-type set to floodgate but floodgate is not installed!");
-            }
         }
     }
 
@@ -131,7 +108,7 @@ public class GeyserBukkitConfiguration implements GeyserConfiguration {
 
     @Override
     public Path getFloodgateKeyFile() {
-        return floodgateKey;
+        return Paths.get(dataFolder.toString(), config.getString("floodgate-key-file", "public-key.pem"));
     }
 
     @Override
