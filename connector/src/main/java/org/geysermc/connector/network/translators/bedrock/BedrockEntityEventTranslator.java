@@ -24,30 +24,24 @@
  *
  */
 
-package org.geysermc.connector.network.translators.sound;
+package org.geysermc.connector.network.translators.bedrock;
 
-import com.nukkitx.math.vector.Vector3f;
-
+import com.nukkitx.protocol.bedrock.packet.EntityEventPacket;
 import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.PacketTranslator;
+import org.geysermc.connector.network.translators.Translator;
 
-/**
- * Handler for playing sounds when right-clicking
- * various objects. Due to Minecraft: Bedrock Edition
- * expecting interaction sounds to be played serverside
- * and Minecraft: Java Edition handling them clientside,
- * this had to be made to handle scenarios like that.
- *
- * @param <T> the value
- */
-public interface SoundInteractionHandler<T> {
+@Translator(packet = EntityEventPacket.class)
+public class BedrockEntityEventTranslator extends PacketTranslator<EntityEventPacket> {
 
-    /**
-     * Handles the interaction when a player
-     * right-clicks a block.
-     *
-     * @param session the session interacting with the block
-     * @param position the position of the block
-     * @param value the value
-     */
-    void handleInteraction(GeyserSession session, Vector3f position, T value);
+    @Override
+    public void translate(EntityEventPacket packet, GeyserSession session) {
+        switch (packet.getType()) {
+            // Resend the packet so we get the eating sounds
+            case EATING_ITEM:
+                session.getUpstream().sendPacket(packet);
+                return;
+        }
+        session.getConnector().getLogger().debug("Did not translate incoming EntityEventPacket: " + packet.toString());
+    }
 }

@@ -24,30 +24,24 @@
  *
  */
 
-package org.geysermc.connector.network.translators.sound;
+package org.geysermc.connector.network.translators.java.world;
 
-import com.nukkitx.math.vector.Vector3f;
-
+import com.github.steveice10.mc.protocol.data.game.world.block.ExplodedBlockRecord;
+import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerExplosionPacket;
+import com.nukkitx.math.vector.Vector3i;
 import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.PacketTranslator;
+import org.geysermc.connector.network.translators.Translator;
+import org.geysermc.connector.network.translators.world.block.BlockTranslator;
+import org.geysermc.connector.utils.ChunkUtils;
 
-/**
- * Handler for playing sounds when right-clicking
- * various objects. Due to Minecraft: Bedrock Edition
- * expecting interaction sounds to be played serverside
- * and Minecraft: Java Edition handling them clientside,
- * this had to be made to handle scenarios like that.
- *
- * @param <T> the value
- */
-public interface SoundInteractionHandler<T> {
+@Translator(packet = ServerExplosionPacket.class)
+public class JavaExplosionTranslator extends PacketTranslator<ServerExplosionPacket> {
 
-    /**
-     * Handles the interaction when a player
-     * right-clicks a block.
-     *
-     * @param session the session interacting with the block
-     * @param position the position of the block
-     * @param value the value
-     */
-    void handleInteraction(GeyserSession session, Vector3f position, T value);
+    @Override
+    public void translate(ServerExplosionPacket packet, GeyserSession session) {
+        for (ExplodedBlockRecord record : packet.getExploded()) {
+            ChunkUtils.updateBlock(session, BlockTranslator.AIR, Vector3i.from(record.getX(), record.getY(), record.getZ()));
+        }
+    }
 }

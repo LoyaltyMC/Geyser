@@ -24,30 +24,24 @@
  *
  */
 
-package org.geysermc.connector.network.translators.sound;
+package org.geysermc.connector.network.translators.sound.block;
 
 import com.nukkitx.math.vector.Vector3f;
-
+import com.nukkitx.protocol.bedrock.data.LevelEventType;
+import com.nukkitx.protocol.bedrock.packet.LevelEventPacket;
 import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.sound.BlockSoundInteractionHandler;
+import org.geysermc.connector.network.translators.sound.SoundHandler;
 
-/**
- * Handler for playing sounds when right-clicking
- * various objects. Due to Minecraft: Bedrock Edition
- * expecting interaction sounds to be played serverside
- * and Minecraft: Java Edition handling them clientside,
- * this had to be made to handle scenarios like that.
- *
- * @param <T> the value
- */
-public interface SoundInteractionHandler<T> {
+@SoundHandler(blocks = "door")
+public class DoorSoundInteractionHandler implements BlockSoundInteractionHandler {
 
-    /**
-     * Handles the interaction when a player
-     * right-clicks a block.
-     *
-     * @param session the session interacting with the block
-     * @param position the position of the block
-     * @param value the value
-     */
-    void handleInteraction(GeyserSession session, Vector3f position, T value);
+    @Override
+    public void handleInteraction(GeyserSession session, Vector3f position, String identifier) {
+        LevelEventPacket levelEventPacket = new LevelEventPacket();
+        levelEventPacket.setType(LevelEventType.SOUND_DOOR);
+        levelEventPacket.setPosition(position);
+        levelEventPacket.setData(0);
+        session.getUpstream().sendPacket(levelEventPacket);
+    }
 }
