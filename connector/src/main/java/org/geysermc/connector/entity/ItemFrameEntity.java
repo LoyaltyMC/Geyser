@@ -36,13 +36,11 @@ import com.nukkitx.protocol.bedrock.data.ItemData;
 import com.nukkitx.protocol.bedrock.packet.BlockEntityDataPacket;
 import com.nukkitx.protocol.bedrock.packet.StartGamePacket;
 import com.nukkitx.protocol.bedrock.packet.UpdateBlockPacket;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.geysermc.connector.entity.type.EntityType;
 import org.geysermc.connector.network.session.GeyserSession;
-import org.geysermc.connector.network.translators.world.block.BlockTranslator;
+import org.geysermc.connector.network.translators.Translators;
+import org.geysermc.connector.network.translators.block.BlockTranslator;
 import org.geysermc.connector.network.translators.item.ItemEntry;
-import org.geysermc.connector.network.translators.item.ItemTranslator;
 import org.geysermc.connector.utils.Toolbox;
 
 import java.util.concurrent.TimeUnit;
@@ -51,12 +49,6 @@ import java.util.concurrent.TimeUnit;
  * Item frames are an entity in Java but a block entity in Bedrock.
  */
 public class ItemFrameEntity extends Entity {
-
-    /**
-     * A map of Vector3i positions to Java entity IDs.
-     * Used for translating Bedrock block actions to Java entity actions.
-     */
-    private static final Object2LongMap<Vector3i> POSITION_TO_ENTITY_ID = new Object2LongOpenHashMap<>();
 
     /**
      * Used for getting the Bedrock block position.
@@ -68,9 +60,12 @@ public class ItemFrameEntity extends Entity {
      */
     private final int bedrockRuntimeId;
     /**
-     * Rotation of item in frame
+     * Rotation of item in frame.
      */
     private float rotation = 0.0f;
+    /**
+     * Cached item frame's Bedrock compound tag.
+     */
     private CompoundTag cachedTag;
 
     public ItemFrameEntity(long entityId, long geyserId, EntityType entityType, Vector3f position, Vector3f motion, Vector3f rotation, HangingDirection direction) {
@@ -87,11 +82,11 @@ public class ItemFrameEntity extends Entity {
         builder.shortTag("id", (short) 199);
         bedrockRuntimeId = BlockTranslator.getItemFrame(builder.buildRootTag());
         bedrockPosition = Vector3i.from(position.getFloorX(), position.getFloorY(), position.getFloorZ());
-        POSITION_TO_ENTITY_ID.put(bedrockPosition, entityId);
     }
 
     @Override
     public void spawnEntity(GeyserSession session) {
+        session.getItemFrameCache().put(bedrockPosition, entityId);
         updateBlock(session);
         valid = true;
         session.getConnector().getLogger().debug("Spawned item frame at location " + bedrockPosition + " with java id " + entityId);
@@ -100,8 +95,8 @@ public class ItemFrameEntity extends Entity {
     @Override
     public void updateBedrockMetadata(EntityMetadata entityMetadata, GeyserSession session) {
         if (entityMetadata.getId() == 7 && entityMetadata.getValue() != null) {
-            ItemData itemData = ItemTranslator.translateToBedrock(session, (ItemStack) entityMetadata.getValue());
-            ItemEntry itemEntry = ItemTranslator.getItem((ItemStack) entityMetadata.getValue());
+            ItemData itemData = Translators.getItemTranslator().translateToBedrock(session, (ItemStack) entityMetadata.getValue());
+            ItemEntry itemEntry = Translators.getItemTranslator().getItem((ItemStack) entityMetadata.getValue());
             CompoundTagBuilder builder = CompoundTag.builder();
 
             String blockName = "";
@@ -132,7 +127,6 @@ public class ItemFrameEntity extends Entity {
         else if (entityMetadata.getId() == 8) {
             rotation = ((int) entityMetadata.getValue()) * 45;
             if (cachedTag == null) {
-                session.getConnector().getLogger().warning("Cached item frame tag is null at " + bedrockPosition.toString());
                 updateBlock(session);
                 return;
             }
@@ -156,7 +150,7 @@ public class ItemFrameEntity extends Entity {
         updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.NONE);
         updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.NEIGHBORS);
         session.getUpstream().sendPacket(updateBlockPacket);
-        POSITION_TO_ENTITY_ID.remove(position, entityId);
+        session.getItemFrameCache().remove(position, entityId);
         valid = false;
         return true;
     }
@@ -173,61 +167,60 @@ public class ItemFrameEntity extends Entity {
 
     /**
      * Updates the item frame as a block
-     * @param session GeyserSession
+     * @param session GeyserSession.
      */
     public void updateBlock(GeyserSession session) {
-        UpdateBlockPacket updateBlockPacket = new UpdateBlockPacket();
-        updateBlockPacket.setDataLayer(0);
-        updateBlockPacket.setBlockPosition(bedrockPosition);
-        updateBlockPacket.setRuntimeId(bedrockRuntimeId);
-        updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.PRIORITY);
-        updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.NONE);
-        updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.NEIGHBORS);
-        if (session.isSpawned()) {
+        // Delay is required, or else loading in frames on chunk load is sketchy at best
+        session.getConnector().getGeneralThreadPool().schedule(() -> {
+            UpdateBlockPacket updateBlockPacket = new UpdateBlockPacket();
+            updateBlockPacket.setDataLayer(0);
+            updateBlockPacket.setBlockPosition(bedrockPosition);
+            updateBlockPacket.setRuntimeId(bedrockRuntimeId);
+            updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.PRIORITY);
+            updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.NONE);
+            updateBlockPacket.getFlags().add(UpdateBlockPacket.Flag.NEIGHBORS);
             session.getUpstream().sendPacket(updateBlockPacket);
-        } else {
-            session.getConnector().getGeneralThreadPool().schedule(() ->
-                    session.getUpstream().sendPacket(updateBlockPacket),
-                    5,
-                    TimeUnit.SECONDS);
-        }
 
-        BlockEntityDataPacket blockEntityDataPacket = new BlockEntityDataPacket();
-        blockEntityDataPacket.setBlockPosition(bedrockPosition);
-        if (cachedTag != null) {
-            blockEntityDataPacket.setData(cachedTag);
-        } else {
-            blockEntityDataPacket.setData(getDefaultTag());
-        }
+            BlockEntityDataPacket blockEntityDataPacket = new BlockEntityDataPacket();
+            blockEntityDataPacket.setBlockPosition(bedrockPosition);
+            if (cachedTag != null) {
+                blockEntityDataPacket.setData(cachedTag);
+            } else {
+                blockEntityDataPacket.setData(getDefaultTag());
+            }
 
-        session.getUpstream().sendPacket(blockEntityDataPacket);
+            session.getUpstream().sendPacket(blockEntityDataPacket);
+        }, 500, TimeUnit.MILLISECONDS);
     }
 
     /**
      * Finds the Java entity ID of an item frame from its Bedrock position.
-     * @param position position of item frame in Bedrock
-     * @return Java entity ID or -1 if not found
+     * @param position position of item frame in Bedrock.
+     * @param session GeyserSession.
+     * @return Java entity ID or -1 if not found.
      */
-    public static long getItemFrameEntityId(Vector3i position) {
-        return POSITION_TO_ENTITY_ID.getOrDefault(position, -1);
+    public static long getItemFrameEntityId(GeyserSession session, Vector3i position) {
+        return session.getItemFrameCache().getOrDefault(position, -1);
     }
 
     /**
      * Determines if the position contains an item frame.
      * Does largely the same thing as getItemFrameEntityId, but for speed purposes is implemented separately,
      * since every block destroy packet has to check for an item frame.
-     * @param position position of block
-     * @return true if position contains item frame, false if not
+     * @param position position of block.
+     * @param session GeyserSession.
+     * @return true if position contains item frame, false if not.
      */
-    public static boolean positionContainsItemFrame(Vector3i position) {
-        return POSITION_TO_ENTITY_ID.containsKey(position);
+    public static boolean positionContainsItemFrame(GeyserSession session, Vector3i position) {
+        return session.getItemFrameCache().containsKey(position);
     }
 
     /**
      * Force-remove from the position-to-ID map so it doesn't cause conflicts.
-     * @param position position of the removed item frame
+     * @param session GeyserSession.
+     * @param position position of the removed item frame.
      */
-    public static void removePosition(Vector3i position) {
-        POSITION_TO_ENTITY_ID.remove(position);
+    public static void removePosition(GeyserSession session, Vector3i position) {
+        session.getItemFrameCache().remove(position);
     }
 }

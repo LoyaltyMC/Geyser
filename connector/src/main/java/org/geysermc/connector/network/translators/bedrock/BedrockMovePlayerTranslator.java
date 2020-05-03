@@ -26,6 +26,7 @@
 package org.geysermc.connector.network.translators.bedrock;
 
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientVehicleMovePacket;
+import com.nukkitx.math.vector.Vector3d;
 import org.geysermc.common.ChatColor;
 import org.geysermc.connector.entity.Entity;
 import org.geysermc.connector.entity.PlayerEntity;
@@ -66,7 +67,7 @@ public class BedrockMovePlayerTranslator extends PacketTranslator<MovePlayerPack
         double javaY = packet.getPosition().getY() - EntityType.PLAYER.getOffset();
         if (packet.isOnGround()) javaY = Math.ceil(javaY * 2) / 2;
 
-        Vector3f position = Vector3f.from(Double.parseDouble(Float.toString(packet.getPosition().getX())), javaY,
+        Vector3d position = Vector3d.from(Double.parseDouble(Float.toString(packet.getPosition().getX())), javaY,
                 Double.parseDouble(Float.toString(packet.getPosition().getZ())));
 
         if(!session.confirmTeleport(position)){
@@ -85,7 +86,7 @@ public class BedrockMovePlayerTranslator extends PacketTranslator<MovePlayerPack
 
         // head yaw, pitch, head yaw
         Vector3f rotation = Vector3f.from(packet.getRotation().getY(), packet.getRotation().getX(), packet.getRotation().getY());
-        entity.setPosition(position);
+        entity.setPosition(packet.getPosition().sub(0, EntityType.PLAYER.getOffset(), 0));
         entity.setRotation(rotation);
 
         /*
