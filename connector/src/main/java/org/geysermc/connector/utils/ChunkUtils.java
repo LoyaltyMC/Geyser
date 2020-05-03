@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static org.geysermc.connector.network.translators.world.block.BlockTranslator.AIR;
 import static org.geysermc.connector.network.translators.world.block.BlockTranslator.BEDROCK_WATER_ID;
 
 public class ChunkUtils {

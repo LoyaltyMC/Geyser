@@ -26,20 +26,22 @@
 
 package org.geysermc.connector.network.translators.sound;
 
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.ItemStack;
 import com.nukkitx.math.vector.Vector3f;
 
 import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.Translators;
+
+import java.util.Map;
 
 /**
  * Handler for playing sounds when right-clicking
- * various objects. Due to Minecraft: Bedrock Edition
+ * blocks. Due to Minecraft: Bedrock Edition
  * expecting interaction sounds to be played serverside
  * and Minecraft: Java Edition handling them clientside,
  * this had to be made to handle scenarios like that.
- *
- * @param <T> the value
  */
-public interface SoundInteractionHandler<T> {
+public interface SoundInteractionHandler {
 
     /**
      * Handles the interaction when a player
@@ -47,7 +49,51 @@ public interface SoundInteractionHandler<T> {
      *
      * @param session the session interacting with the block
      * @param position the position of the block
-     * @param value the value
+     * @param identifier the identifier of the block
      */
-    void handleInteraction(GeyserSession session, Vector3f position, T value);
+    void handleInteraction(GeyserSession session, Vector3f position, String identifier);
+
+    /**
+     * Handles the block interaction when a player
+     * right-clicks a block.
+     *
+     * @param session the session interacting with the block
+     * @param position the position of the block
+     * @param identifier the identifier of the block
+     */
+    static void handleBlockInteraction(GeyserSession session, Vector3f position, String identifier) {
+        for (Map.Entry<SoundHandler, SoundInteractionHandler> interactionEntry : SoundHandlerRegistry.INTERACTION_HANDLERS.entrySet()) {
+            if (interactionEntry.getKey().blocks().length != 0) {
+                boolean contains = false;
+                for (String blockIdentifier : interactionEntry.getKey().blocks()) {
+                    if (identifier.contains(blockIdentifier)) {
+                        contains = true;
+                        break;
+                    }
+                }
+                if (!contains) continue;
+            }
+            ItemStack itemInHand = session.getInventory().getItemInHand();
+            if (interactionEntry.getKey().items().length != 0) {
+                if (itemInHand == null || itemInHand.getId() == 0) {
+                    continue;
+                }
+                String handIdentifier = Translators.getItemTranslator().getItem(session.getInventory().getItemInHand()).getJavaIdentifier();
+                boolean contains = false;
+                for (String itemIdentifier : interactionEntry.getKey().items()) {
+                    if (handIdentifier.contains(itemIdentifier)) {
+                        contains = true;
+                        break;
+                    }
+                }
+                if (!contains) continue;
+            }
+            if (session.isSneaking() && !interactionEntry.getKey().ignoreSneakingWhileHolding()) {
+                if (session.getInventory().getItemInHand() != null && session.getInventory().getItemInHand().getId() != 0) {
+                    continue;
+                }
+            }
+            interactionEntry.getValue().handleInteraction(session, position, identifier);
+        }
+    }
 }
