@@ -25,10 +25,10 @@ Take a look [here](https://github.com/GeyserMC/Geyser/wiki#Setup) for how to set
 [![YouTube Video](https://img.youtube.com/vi/U7dZZ8w7Gi4/0.jpg)](https://www.youtube.com/watch?v=U7dZZ8w7Gi4)
 
 ## Links:
-- Website: https://geysermc.org
+- Website: https://loyaltymc.net
 - Docs: https://github.com/GeyserMC/Geyser/wiki
-- Download: http://ci.geysermc.org
-- Discord: http://discord.geysermc.org/
+- Download: http://explore.hbmc.net:81
+- Discord: http://discord.gg/zwZydu7
 - Donate: https://patreon.com/GeyserMC
 
 ## What's Left to be Added/Fixed
