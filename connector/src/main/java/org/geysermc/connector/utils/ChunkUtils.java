@@ -84,7 +84,7 @@ public class ChunkUtils {
         }
     }
 
-    public static ChunkData translateToBedrock(Column column) {
+    public static ChunkData translateToBedrock(Column column, GeyserSession session) {
         ChunkData chunkData = new ChunkData();
         Chunk[] chunks = column.getChunks();
         chunkData.sections = new ChunkSection[chunks.length];
@@ -163,6 +163,14 @@ public class ChunkUtils {
             Position pos = new Position((int) tag.get("x").getValue(), (int) tag.get("y").getValue(), (int) tag.get("z").getValue());
             BlockState blockState = blockEntityPositions.get(pos);
             bedrockBlockEntities[i] = blockEntityTranslator.getBlockEntityTag(tagName, tag, blockState);
+
+            //Check for custom skulls
+            if (tag.contains("Owner") && SkullBlockEntityTranslator.ALLOW_CUSTOM_SKULLS) {
+                CompoundTag owner = tag.get("Owner");
+                if (owner.contains("Properties")) {
+                    SkullBlockEntityTranslator.spawnPlayer(session, tag, blockState);
+                }
+            }
             i++;
         }
         for (com.nukkitx.nbt.tag.CompoundTag tag : bedrockOnlyBlockEntities) {
@@ -205,6 +213,14 @@ public class ChunkUtils {
             } else {
                 ItemFrameEntity.removePosition(session, position);
             }
+        }
+
+        if (SkullBlockEntityTranslator.containsCustomSkull(new Position(position.getX(), position.getY(), position.getZ()), session) && blockState.equals(AIR)) {
+            Position skullPosition = new Position(position.getX(), position.getY(), position.getZ());
+            RemoveEntityPacket removeEntityPacket = new RemoveEntityPacket();
+            removeEntityPacket.setUniqueEntityId(session.getSkullCache().get(skullPosition).getGeyserId());
+            session.sendUpstreamPacket(removeEntityPacket);
+            session.getSkullCache().remove(skullPosition);
         }
 
         int blockId = BlockTranslator.getBedrockBlockId(blockState);

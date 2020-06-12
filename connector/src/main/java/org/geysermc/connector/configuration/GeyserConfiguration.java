@@ -70,6 +70,8 @@ public interface GeyserConfiguration {
 
     boolean isCacheChunks();
 
+    boolean isAllowCustomSkulls();
+
     IMetricsInfo getMetrics();
 
     interface IBedrockConfiguration {
