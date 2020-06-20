@@ -51,7 +51,7 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
                     }
 
                     if (entity.isPlayerList()) {
-                        PlayerListPacket.Entry entry = SkinUtils.buildCachedEntry(entity.getProfile(), entity.getGeyserId());
+                        PlayerListPacket.Entry entry = SkinUtils.buildCachedEntry(GeyserSession session, entity.getProfile(), entity.getGeyserId());
                         if (entity == session.getPlayerEntity()) {
                             // Copy the entry with our identity instead.
                             PlayerListPacket.Entry copy = new PlayerListPacket.Entry(session.getAuthData().getUUID());
