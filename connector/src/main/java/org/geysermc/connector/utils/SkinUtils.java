@@ -255,7 +255,7 @@ public class SkinUtils {
         });
     }
 
-    public static void handleBedrockSkin(PlayerEntity playerEntity, BedrockClientData clientData) {
+    public static void handleBedrockSkin(PlayerEntity playerEntity, BedrockClientData clientData) {// fetchOurSkin
         GameProfileData data = GameProfileData.from(playerEntity.getProfile());
 
         GeyserConnector.getInstance().getLogger().info("Registering bedrock skin for " + playerEntity.getUsername() + " (" + playerEntity.getUuid() + ")");

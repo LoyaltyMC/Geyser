@@ -276,16 +276,15 @@ public class GeyserSession implements CommandSender {
         upstream.sendPacket(creativePacket);
     }
 
-    public void login() {
-        if (connector.getAuthType() != AuthType.ONLINE) {
-            connector.getLogger().info(
-                    "Attempting to login using " + connector.getAuthType().name().toLowerCase() + " mode... " +
-                            (connector.getAuthType() == AuthType.OFFLINE ?
-                                    "authentication is disabled." : "authentication will be encrypted"
-                            )
-            );
-            authenticate(authData.getName());
-        }
+    public void fetchOurSkin(PlayerListPacket.Entry entry) {
+        PlayerSkinPacket playerSkinPacket = new PlayerSkinPacket();
+        playerSkinPacket.setUuid(authData.getUUID());
+        playerSkinPacket.setSkin(entry.getSkin());
+        playerSkinPacket.setOldSkinName("OldName");
+        playerSkinPacket.setNewSkinName("NewName");
+        playerSkinPacket.setTrustedSkin(true);
+        upstream.sendPacket(playerSkinPacket);
+        getConnector().getLogger().debug("Sending skin for " + playerEntity.getUsername() + " " + authData.getUUID());
     }
 
     public void authenticate(String username) {
