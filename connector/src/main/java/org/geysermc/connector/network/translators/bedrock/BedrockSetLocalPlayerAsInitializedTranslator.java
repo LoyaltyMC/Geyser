@@ -46,12 +46,12 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
                 playerListPacket.setAction(PlayerListPacket.Action.ADD);
                 for (PlayerEntity entity : session.getEntityCache().getEntitiesByType(PlayerEntity.class)) {
                     if (!entity.isValid()) {
-                        SkinUtils.requestAndHandleSkinAndCape(entity, session, null);
-                        entity.sendPlayer(session);
+                        // async skin loading
+                        SkinUtils.requestAndHandleSkinAndCape(entity, session, skinAndCape -> entity.sendPlayer(session));
                     }
 
                     if (entity.isPlayerList()) {
-                       // PlayerListPacket.Entry entry = SkinUtils.buildCachedEntry(session, entity.getProfile(), entity.getGeyserId());
+                        PlayerListPacket.Entry entry = SkinUtils.buildCachedEntry(entity.getProfile(), entity.getGeyserId());
                         if (entity == session.getPlayerEntity()) {
                             // Copy the entry with our identity instead.
                             PlayerListPacket.Entry copy = new PlayerListPacket.Entry(session.getAuthData().getUUID());
