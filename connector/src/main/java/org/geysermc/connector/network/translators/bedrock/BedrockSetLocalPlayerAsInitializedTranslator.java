@@ -34,8 +34,6 @@ import org.geysermc.connector.utils.SkinUtils;
 
 import com.nukkitx.protocol.bedrock.packet.SetLocalPlayerAsInitializedPacket;
 
-import java.util.concurrent.TimeUnit;
-
 @Translator(packet = SetLocalPlayerAsInitializedPacket.class)
 public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslator<SetLocalPlayerAsInitializedPacket> {
     @Override
@@ -68,16 +66,7 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
                         playerListPacket.getEntries().add(entry);
                     }
                 }
-
-                // Send Skulls
-                for (PlayerEntity entity : session.getSkullCache().values()) {
-                    entity.spawnEntity(session);
-
-                    SkinUtils.requestAndHandleSkinAndCape(entity, session, (skinAndCape) -> session.getConnector().getGeneralThreadPool().schedule(() -> {
-                        entity.getMetadata().getFlags().setFlag(EntityFlag.INVISIBLE, false);
-                        entity.updateBedrockMetadata(session);
-                    }, 2, TimeUnit.SECONDS));
-                }
+                session.getUpstream().sendPacket(playerListPacket);
 
             }
         }
