@@ -32,6 +32,7 @@ import com.nukkitx.nbt.tag.StringTag;
 import com.nukkitx.protocol.bedrock.data.ContainerId;
 import com.nukkitx.protocol.bedrock.data.ItemData;
 import com.nukkitx.protocol.bedrock.packet.ContainerClosePacket;
+import com.nukkitx.protocol.bedrock.packet.InventoryContentPacket;
 import com.nukkitx.protocol.bedrock.packet.InventorySlotPacket;
 import org.geysermc.common.ChatColor;
 import org.geysermc.connector.GeyserConnector;
@@ -107,6 +108,13 @@ public class InventoryUtils {
     }
 
     public static void updateCursor(GeyserSession session) {
+//        InventoryContentPacket inventoryContentPacket = new InventoryContentPacket();
+//        inventoryContentPacket.setContainerId(ContainerId.CURSOR);
+//        inventoryContentPacket.setContents(new ItemData[] {ItemTranslator.translateToBedrock(session, session.getInventory().getCursor())});
+//        session.sendUpstreamPacket(inventoryContentPacket);
+
+        // Not sure which way of updating cursor is better but both seem to achieve it. However Bedrock uses a muti
+        // slot cursor as an undo so using setSlot is probably better.
         InventorySlotPacket cursorPacket = new InventorySlotPacket();
         cursorPacket.setContainerId(ContainerId.CURSOR);
         cursorPacket.setSlot(0);
