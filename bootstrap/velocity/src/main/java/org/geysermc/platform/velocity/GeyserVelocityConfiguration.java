@@ -45,6 +45,52 @@ public class GeyserVelocityConfiguration extends GeyserJacksonConfiguration {
     @JsonProperty("floodgate-key-file")
     private String floodgateKeyFile;
 
+    private Map<String, UserAuthenticationInfo> userAuths;
+
+    @JsonProperty("command-suggestions")
+    private boolean commandSuggestions;
+
+    @JsonProperty("passthrough-motd")
+    private boolean isPassthroughMotd;
+
+    @JsonProperty("passthrough-player-counts")
+    private boolean isPassthroughPlayerCounts;
+
+    @JsonProperty("legacy-ping-passthrough")
+    private boolean isLegacyPingPassthrough;
+
+    @JsonProperty("ping-passthrough-interval")
+    private int pingPassthroughInterval;
+
+    @JsonProperty("max-players")
+    private int maxPlayers;
+
+    @JsonProperty("debug-mode")
+    private boolean debugMode;
+
+    @JsonProperty("general-thread-pool")
+    private int generalThreadPool;
+
+    @JsonProperty("allow-third-party-capes")
+    private boolean allowThirdPartyCapes;
+
+    @JsonProperty("allow-third-party-ears")
+    private boolean allowThirdPartyEars;
+
+    @JsonProperty("default-locale")
+    private String defaultLocale;
+
+    @JsonProperty("cache-chunks")
+    private boolean cacheChunks;
+
+    @JsonProperty("allow-custom-skulls")
+    private boolean isAllowCustomSkulls;
+
+    @JsonProperty("above-bedrock-nether-building")
+    private boolean aboveBedrockNetherBuilding;
+
+    private MetricsInfo metrics;
+
     private Path floodgateKey;
 
     @Override
