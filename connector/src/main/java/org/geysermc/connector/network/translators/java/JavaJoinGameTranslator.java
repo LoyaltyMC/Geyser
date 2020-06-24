@@ -85,5 +85,9 @@ public class JavaJoinGameTranslator extends PacketTranslator<ServerJoinGamePacke
         List<SkinPart> skinParts = Arrays.asList(SkinPart.values());
         ClientSettingsPacket clientSettingsPacket = new ClientSettingsPacket(locale, (byte) session.getRenderDistance(), ChatVisibility.FULL, true, skinParts, Hand.MAIN_HAND);
         session.sendDownstreamPacket(clientSettingsPacket);
+
+        if (!packet.getDimension().equals(entity.getDimension())) {
+            DimensionUtils.switchDimension(session, packet.getDimension());
+        }
     }
 }
