@@ -67,5 +67,8 @@ public class BedrockContainerCloseTranslator extends PacketTranslator<ContainerC
         } else {
             runnable.run();
         }
+
+        //Client wants close confirmation
+        session.sendUpstreamPacket(packet);
     }
 }
