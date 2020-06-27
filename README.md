@@ -54,3 +54,4 @@ you're interested in helping out with Geyser.
 - [Steveice10's Java Protocol Library](https://github.com/Steveice10/MCProtocolLib)
 - [TerminalConsoleAppender](https://github.com/Minecrell/TerminalConsoleAppender)
 - [Simple Logging Facade for Java (slf4j)](https://github.com/qos-ch/slf4j)
+.
