@@ -99,26 +99,9 @@ public class JavaEntityStatusTranslator extends PacketTranslator<ServerEntitySta
             case IRON_GOLEM_EMPTY_HAND:
                 entityEventPacket.setType(EntityEventType.GOLEM_FLOWER_WITHDRAW);
                 break;
-            default:
-                return;
         }
 
-        if (session.isSpawned()) {
-            session.sendUpstreamPacket(entityEventPacket);
-        } else {
-            session.getSpawnPacketCache().add(entityEventPacket);
-        }
-
-//        // This fixes some death events not getting registered on the client such as drowning
-//        if (entityEventPacket.getType() == EntityEventType.DEATH) {
-//            GeyserConnector.getInstance().getGeneralThreadPool().schedule(() -> {
-//                EntityEventPacket eventPacket2 = new EntityEventPacket();
-//                eventPacket2.setRuntimeEntityId(entityEventPacket.getRuntimeEntityId());
-//                eventPacket2.setType(entityEventPacket.getType());
-//                eventPacket2.setData(entityEventPacket.getData());
-//                session.sendUpstreamPacket(eventPacket2);
-//            }, 1, TimeUnit.MILLISECONDS);
-//        }
+        session.sendUpstreamPacket(entityEventPacket);
 
         // This fixes some death events not getting registered on the client such as drowning
         if (entityEventPacket.getType() == EntityEventType.DEATH) {

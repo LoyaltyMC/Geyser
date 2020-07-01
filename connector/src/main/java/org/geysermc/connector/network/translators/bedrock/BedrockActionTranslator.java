@@ -31,12 +31,8 @@ import com.github.steveice10.mc.protocol.data.game.entity.player.PlayerState;
 import com.github.steveice10.mc.protocol.data.game.world.block.BlockFace;
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerActionPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.client.player.ClientPlayerStatePacket;
-import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket;
 import com.nukkitx.math.vector.Vector3i;
-import com.nukkitx.protocol.bedrock.BedrockPacket;
 import com.nukkitx.protocol.bedrock.data.LevelEventType;
-import com.nukkitx.protocol.bedrock.data.entity.EntityEventType;
-import com.nukkitx.protocol.bedrock.packet.EntityEventPacket;
 import com.nukkitx.protocol.bedrock.packet.LevelEventPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayStatusPacket;
 import com.nukkitx.protocol.bedrock.packet.PlayerActionPacket;
@@ -62,18 +58,8 @@ public class BedrockActionTranslator extends PacketTranslator<PlayerActionPacket
 
         switch (packet.getAction()) {
             case RESPAWN:
-                EntityEventPacket eventPacket = new EntityEventPacket();
-                eventPacket.setRuntimeEntityId(entity.getGeyserId());
-                eventPacket.setType(EntityEventType.RESPAWN);
-                eventPacket.setData(0);
-                session.sendUpstreamPacket(eventPacket);
-
-                // Send all cached packets
-                for (BedrockPacket cachedPacket : session.getSpawnPacketCache()) {
-                    session.sendUpstreamPacket(cachedPacket);
-                }
-                session.getSpawnPacketCache().clear();
-
+                // Don't put anything here as respawn is already handled
+                // in BedrockRespawnTranslator
                 break;
             case START_SWIMMING:
                 ClientPlayerStatePacket startSwimPacket = new ClientPlayerStatePacket((int) entity.getEntityId(), PlayerState.START_SPRINTING);
