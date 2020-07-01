@@ -78,7 +78,7 @@ public class GeyserConnector {
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 
     public static final String NAME = "Geyser";
-    public static final String VERSION = "DEV"; // A fallback for running in IDEs
+    public static final String VERSION = "IDE Version"; // A fallback for running in IDEs
 
     private final Map<InetSocketAddress, GeyserSession> players = new HashMap<>();
 
@@ -124,8 +124,9 @@ public class GeyserConnector {
 
         logger.info("******************************************");
         logger.info("");
-        logger.info("Loading " + NAME + " version " + VERSION);
+        logger.info("Welcome To TheLoyaltyGeyser" + " Version: " + VERSION);
         logger.info("");
+        logger.info("WARNING: This Geyser Version Is Not The Official Version While this does have more features it Can Be Unstable And May Have More Bugs USE AT YOUR OWN RISK");
         logger.info("******************************************");
 
         this.generalThreadPool = Executors.newScheduledThreadPool(config.getGeneralThreadPool());
@@ -167,7 +168,7 @@ public class GeyserConnector {
             if (throwable == null) {
                 logger.info("Started Geyser on " + config.getBedrock().getAddress() + ":" + config.getBedrock().getPort());
             } else {
-                logger.severe("Failed to start Geyser on " + config.getBedrock().getAddress() + ":" + config.getBedrock().getPort());
+                logger.severe("Failed to start Geyser on " + config.getBedrock().getAddress() + ":" + config.getBedrock().getPort() + " Geyser May Already Be In Use");
                 throwable.printStackTrace();
             }
         }).join();
@@ -188,11 +189,11 @@ public class GeyserConnector {
         eventManager.triggerEvent(new GeyserStartEvent());
 
         double completeTime = (System.currentTimeMillis() - startupTime) / 1000D;
-        logger.info(String.format("Done (%ss)! Run /geyser help for help!", new DecimalFormat("#.###").format(completeTime)));
+        logger.info(String.format("Done Starting (%ss)! Run /geyser help for help!", new DecimalFormat("#.###").format(completeTime)));
     }
 
     public void shutdown() {
-        bootstrap.getGeyserLogger().info("Shutting down Geyser.");
+        bootstrap.getGeyserLogger().info("Shutting down Geyser. Bye!");
         shuttingDown = true;
 
         // Trigger GeyserStop Events
