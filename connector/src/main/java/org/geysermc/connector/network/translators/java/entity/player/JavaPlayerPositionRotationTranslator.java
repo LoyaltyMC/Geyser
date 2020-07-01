@@ -63,16 +63,16 @@ public class JavaPlayerPositionRotationTranslator extends PacketTranslator<Serve
             entity.setRotation(Vector3f.from(packet.getYaw(), packet.getPitch(), packet.getYaw()));
 
             RespawnPacket respawnPacket = new RespawnPacket();
-            respawnPacket.setRuntimeEntityId(entity.getGeyserId());
+            respawnPacket.setRuntimeEntityId(0);
             respawnPacket.setPosition(pos);
             respawnPacket.setState(RespawnPacket.State.SERVER_READY);
             session.sendUpstreamPacket(respawnPacket);
 
-            EntityEventPacket eventPacket = new EntityEventPacket();
-            eventPacket.setRuntimeEntityId(entity.getGeyserId());
-            eventPacket.setType(EntityEventType.RESPAWN);
-            eventPacket.setData(0);
-            session.sendUpstreamPacket(eventPacket);
+//            EntityEventPacket eventPacket = new EntityEventPacket();
+//            eventPacket.setRuntimeEntityId(entity.getGeyserId());
+//            eventPacket.setType(EntityEventType.RESPAWN);
+//            eventPacket.setData(0);
+//            session.sendUpstreamPacket(eventPacket);
 
             // This will prevent the client getting stuck at the respawn screen
             GeyserConnector.getInstance().getGeneralThreadPool().schedule(() -> {
@@ -83,30 +83,39 @@ public class JavaPlayerPositionRotationTranslator extends PacketTranslator<Serve
                 session.sendUpstreamPacket(eventPacket2);
             }, 1, TimeUnit.MILLISECONDS);
 
-            SetEntityDataPacket entityDataPacket = new SetEntityDataPacket();
-            entityDataPacket.setRuntimeEntityId(entity.getGeyserId());
-            entityDataPacket.getMetadata().putAll(entity.getMetadata());
-            session.sendUpstreamPacket(entityDataPacket);
+//            // This will prevent the client getting stuck at the respawn screen
+//            GeyserConnector.getInstance().getGeneralThreadPool().schedule(() -> {
+//                EntityEventPacket eventPacket2 = new EntityEventPacket();
+//                eventPacket2.setRuntimeEntityId(entity.getGeyserId());
+//                eventPacket2.setType(EntityEventType.RESPAWN);
+//                eventPacket2.setData(0);
+//                session.sendUpstreamPacket(eventPacket2);
+//            }, 1, TimeUnit.MILLISECONDS);
 
-            MovePlayerPacket movePlayerPacket = new MovePlayerPacket();
-            movePlayerPacket.setRuntimeEntityId(entity.getGeyserId());
-            movePlayerPacket.setPosition(pos);
-            movePlayerPacket.setRotation(Vector3f.from(packet.getPitch(), packet.getYaw(), 0));
-            movePlayerPacket.setMode(MovePlayerPacket.Mode.RESPAWN); //TODO: PROBABLY RIGHT BUT STILL CHECK
+//            SetEntityDataPacket entityDataPacket = new SetEntityDataPacket();
+//            entityDataPacket.setRuntimeEntityId(entity.getGeyserId());
+//            entityDataPacket.getMetadata().putAll(entity.getMetadata());
+//            session.sendUpstreamPacket(entityDataPacket);
 
-            session.sendUpstreamPacket(movePlayerPacket);
+//            MovePlayerPacket movePlayerPacket = new MovePlayerPacket();
+//            movePlayerPacket.setRuntimeEntityId(entity.getGeyserId());
+//            movePlayerPacket.setPosition(pos);
+//            movePlayerPacket.setRotation(Vector3f.from(packet.getPitch(), packet.getYaw(), 0));
+//            movePlayerPacket.setMode(MovePlayerPacket.Mode.RESPAWN); //TODO: PROBABLY RIGHT BUT STILL CHECK
+//
+//            session.sendUpstreamPacket(movePlayerPacket);
             session.setSpawned(true);
-
+//
             ClientTeleportConfirmPacket teleportConfirmPacket = new ClientTeleportConfirmPacket(packet.getTeleportId());
             session.sendDownstreamPacket(teleportConfirmPacket);
 
-            ChunkUtils.updateChunkPosition(session, pos.toInt());
+//            ChunkUtils.updateChunkPosition(session, pos.toInt());
 
             session.getConnector().getLogger().info("Spawned player at " + packet.getX() + " " + packet.getY() + " " + packet.getZ());
             return;
         }
 
-        session.setSpawned(true);
+//        session.setSpawned(true);
 
         // Ignore certain move correction packets for smoother movement
         // These are never relative

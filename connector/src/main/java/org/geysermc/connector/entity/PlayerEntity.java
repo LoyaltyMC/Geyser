@@ -252,7 +252,11 @@ public class PlayerEntity extends LivingEntity {
             // Setting to a higher maximum since plugins/datapacks can probably extend the Bedrock soft limit
             attributes.add(new AttributeData("minecraft:absorption", 0.0f, 1024f, (float) entityMetadata.getValue(), 0.0f));
             attributesPacket.setAttributes(attributes);
-            session.sendUpstreamPacket(attributesPacket);
+            if (session.isSpawned()) {
+                session.sendUpstreamPacket(attributesPacket);
+            } else {
+                session.getSpawnPacketCache().add(attributesPacket);
+            }
         }
 
         // Parrot occupying shoulder
