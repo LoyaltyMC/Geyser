@@ -39,6 +39,10 @@ public class JavaDifficultyTranslator extends PacketTranslator<ServerDifficultyP
     public void translate(ServerDifficultyPacket packet, GeyserSession session) {
         SetDifficultyPacket setDifficultyPacket = new SetDifficultyPacket();
         setDifficultyPacket.setDifficulty(packet.getDifficulty().ordinal());
-        session.sendUpstreamPacket(setDifficultyPacket);
+        if (session.isSpawned()) {
+            session.sendUpstreamPacket(setDifficultyPacket);
+        } else {
+            session.getSpawnPacketCache().add(setDifficultyPacket);
+        }
     }
 }

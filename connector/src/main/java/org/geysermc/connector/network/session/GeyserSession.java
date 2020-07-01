@@ -128,6 +128,9 @@ public class GeyserSession implements CommandSender {
 
     private DataCache<Packet> javaPacketCache;
 
+    @Getter
+    private final List<BedrockPacket> spawnPacketCache = new ArrayList<>();
+
     @Setter
     private Vector2i lastChunkPosition = null;
     private int renderDistance;
@@ -502,7 +505,11 @@ public class GeyserSession implements CommandSender {
 
         ChunkRadiusUpdatedPacket chunkRadiusUpdatedPacket = new ChunkRadiusUpdatedPacket();
         chunkRadiusUpdatedPacket.setRadius(renderDistance);
-        upstream.sendPacket(chunkRadiusUpdatedPacket);
+        if (isSpawned()) {
+            upstream.sendPacket(chunkRadiusUpdatedPacket);
+        } else {
+            getSpawnPacketCache().add(chunkRadiusUpdatedPacket);
+        }
     }
 
     public InetSocketAddress getSocketAddress() {

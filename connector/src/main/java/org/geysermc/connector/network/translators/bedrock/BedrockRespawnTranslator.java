@@ -40,11 +40,19 @@ public class BedrockRespawnTranslator extends PacketTranslator<RespawnPacket> {
     @Override
     public void translate(RespawnPacket packet, GeyserSession session) {
         if (packet.getState() == RespawnPacket.State.CLIENT_READY) {
-            RespawnPacket respawnPacket = new RespawnPacket();
-            respawnPacket.setRuntimeEntityId(0);
-            respawnPacket.setPosition(Vector3f.ZERO);
-            respawnPacket.setState(RespawnPacket.State.SERVER_SEARCHING);
-            session.sendUpstreamPacket(respawnPacket);
+//            RespawnPacket respawnPacket = new RespawnPacket();
+//            respawnPacket.setRuntimeEntityId(0);
+//            respawnPacket.setPosition(Vector3f.from(0, 32767, 0));
+//            respawnPacket.setState(RespawnPacket.State.SERVER_SEARCHING);
+//            session.sendUpstreamPacket(respawnPacket);
+
+            if (session.isSpawned()) {
+                RespawnPacket respawnPacket2 = new RespawnPacket();
+                respawnPacket2.setRuntimeEntityId(0);
+                respawnPacket2.setPosition(session.getPlayerEntity().getPosition());
+                respawnPacket2.setState(RespawnPacket.State.SERVER_READY);
+                session.sendUpstreamPacket(respawnPacket2);
+            }
 
             ClientRequestPacket javaRespawnPacket = new ClientRequestPacket(ClientRequest.RESPAWN);
             session.sendDownstreamPacket(javaRespawnPacket);

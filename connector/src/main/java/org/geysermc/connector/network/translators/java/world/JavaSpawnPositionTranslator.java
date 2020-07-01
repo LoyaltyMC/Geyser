@@ -42,6 +42,10 @@ public class JavaSpawnPositionTranslator extends PacketTranslator<ServerSpawnPos
         spawnPositionPacket.setBlockPosition(Vector3i.from(packet.getPosition().getX(), packet.getPosition().getY(), packet.getPosition().getZ()));
         spawnPositionPacket.setSpawnForced(true);
         spawnPositionPacket.setSpawnType(SetSpawnPositionPacket.Type.WORLD_SPAWN);
-        session.sendUpstreamPacket(spawnPositionPacket);
+        if (session.isSpawned()) {
+            session.sendUpstreamPacket(spawnPositionPacket);
+        } else {
+            session.getSpawnPacketCache().add(spawnPositionPacket);
+        }
     }
 }
