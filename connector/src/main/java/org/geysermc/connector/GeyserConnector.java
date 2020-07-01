@@ -126,7 +126,9 @@ public class GeyserConnector {
         logger.info("");
         logger.info("Welcome To TheLoyaltyGeyser" + " Version: " + VERSION);
         logger.info("");
-        logger.info("WARNING: This Geyser Version Is Not The Official Version While this does have more features it Can Be Unstable And May Have More Bugs USE AT YOUR OWN RISK");
+        logger.info("WARNING: This Geyser Version Is Not The Official Version");
+        logger.info("While this does have more features it Can Be Unstable And May Have More Bugs USE AT YOUR OWN RISK");
+        logger.info("");
         logger.info("******************************************");
 
         this.generalThreadPool = Executors.newScheduledThreadPool(config.getGeneralThreadPool());
@@ -206,7 +208,7 @@ public class GeyserConnector {
             bootstrap.getGeyserLogger().info("Kicking " + players.size() + " player(s)");
 
             for (GeyserSession playerSession : players.values()) {
-                playerSession.disconnect("Geyser Proxy shutting down.");
+                playerSession.disconnect("Geyser is Shutting Down");
             }
 
             CompletableFuture<Void> future = CompletableFuture.runAsync(new Runnable() {
@@ -243,7 +245,7 @@ public class GeyserConnector {
         authType = null;
         this.getCommandManager().getCommands().clear();
 
-        bootstrap.getGeyserLogger().info("Geyser shutdown successfully.");
+        bootstrap.getGeyserLogger().info("Shutdown Finished Sucsessfully.");
     }
 
     public void addPlayer(GeyserSession player) {
