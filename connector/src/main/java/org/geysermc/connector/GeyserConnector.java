@@ -84,7 +84,7 @@ public class GeyserConnector {
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
 
     public static final String NAME = "Geyser";
-    public static final String VERSION = "DEV"; // A fallback for running in IDEs
+    public static final String VERSION = "IDE Version"; // A fallback for running in IDEs
 
     private final List<GeyserSession> players = new ArrayList<>();
 
@@ -129,6 +129,10 @@ public class GeyserConnector {
         logger.info("******************************************");
         logger.info("");
         logger.info(LanguageUtils.getLocaleStringLog("geyser.core.load", NAME, VERSION));
+        logger.info("Welcome To TheLoyaltyGeyser" + " Version: " + VERSION);
+        logger.info("");
+        logger.info("WARNING: This Geyser Version Is Not The Official Version");
+        logger.info("While this does have more features it Can Be Unstable And May Have More Bugs USE AT YOUR OWN RISK");
         logger.info("");
         logger.info("******************************************");
 
@@ -181,7 +185,7 @@ public class GeyserConnector {
             if (throwable == null) {
                 logger.info(LanguageUtils.getLocaleStringLog("geyser.core.start", config.getBedrock().getAddress(), String.valueOf(config.getBedrock().getPort())));
             } else {
-                logger.severe(LanguageUtils.getLocaleStringLog("geyser.core.fail", config.getBedrock().getAddress(), config.getBedrock().getPort()));
+                logger.severe("Failed to start Geyser on " + config.getBedrock().getAddress() + ":" + config.getBedrock().getPort() + " Geyser May Already Be In Use");
                 throwable.printStackTrace();
             }
         }).join();
@@ -222,11 +226,10 @@ public class GeyserConnector {
         } else {
             message += LanguageUtils.getLocaleStringLog("geyser.core.finish.console");
         }
-        logger.info(message);
     }
 
     public void shutdown() {
-        bootstrap.getGeyserLogger().info(LanguageUtils.getLocaleStringLog("geyser.core.shutdown"));
+        bootstrap.getGeyserLogger().info("Shutting down Geyser. Bye!");
         shuttingDown = true;
 
         // Trigger GeyserStop Events
@@ -241,7 +244,7 @@ public class GeyserConnector {
             // Make a copy to prevent ConcurrentModificationException
             final List<GeyserSession> tmpPlayers = new ArrayList<>(players);
             for (GeyserSession playerSession : tmpPlayers) {
-                playerSession.disconnect(LanguageUtils.getPlayerLocaleString("geyser.core.shutdown.kick.message", playerSession.getClientData().getLanguageCode()));
+                playerSession.disconnect("Geyser is Shutting Down");
             }
 
             CompletableFuture<Void> future = CompletableFuture.runAsync(new Runnable() {
@@ -278,7 +281,7 @@ public class GeyserConnector {
         authType = null;
         this.getCommandManager().getCommands().clear();
 
-        bootstrap.getGeyserLogger().info(LanguageUtils.getLocaleStringLog("geyser.core.shutdown.done"));
+        bootstrap.getGeyserLogger().info("Shutdown Finished Sucsessfully.");
     }
 
     public void addPlayer(GeyserSession player) {
