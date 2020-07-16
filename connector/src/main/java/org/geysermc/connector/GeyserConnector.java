@@ -128,10 +128,6 @@ public class GeyserConnector {
         logger.info("******************************************");
         logger.info("");
         logger.info(LanguageUtils.getLocaleStringLog("geyser.core.load", NAME, VERSION));
-        logger.info("Welcome To TheLoyaltyGeyser" + " Version: " + VERSION);
-        logger.info("");
-        logger.info("WARNING: This Geyser Version Is Not The Official Version");
-        logger.info("While this does have more features it Can Be Unstable And May Have More Bugs USE AT YOUR OWN RISK");
         logger.info("");
         logger.info("******************************************");
 
@@ -183,7 +179,7 @@ public class GeyserConnector {
             if (throwable == null) {
                 logger.info(LanguageUtils.getLocaleStringLog("geyser.core.start", config.getBedrock().getAddress(), String.valueOf(config.getBedrock().getPort())));
             } else {
-                logger.severe("Failed to start Geyser on " + config.getBedrock().getAddress() + ":" + config.getBedrock().getPort() + " Geyser May Already Be In Use");
+                logger.severe(LanguageUtils.getLocaleStringLog("geyser.core.fail", config.getBedrock().getAddress(), config.getBedrock().getPort()));
                 throwable.printStackTrace();
             }
         }).join();
@@ -227,7 +223,8 @@ public class GeyserConnector {
     }
 
     public void shutdown() {
-        bootstrap.getGeyserLogger().info("Shutting down Geyser. Bye!");
+
+        bootstrap.getGeyserLogger().info(LanguageUtils.getLocaleStringLog("geyser.core.shutdown"));
         shuttingDown = true;
 
         // Trigger GeyserStop Events
@@ -242,7 +239,7 @@ public class GeyserConnector {
             // Make a copy to prevent ConcurrentModificationException
             final List<GeyserSession> tmpPlayers = new ArrayList<>(players);
             for (GeyserSession playerSession : tmpPlayers) {
-                playerSession.disconnect("Geyser is Shutting Down");
+                playerSession.disconnect(LanguageUtils.getPlayerLocaleString("geyser.core.shutdown.kick.message", playerSession.getClientData().getLanguageCode()));
             }
 
             CompletableFuture<Void> future = CompletableFuture.runAsync(new Runnable() {
@@ -279,7 +276,7 @@ public class GeyserConnector {
         authType = null;
         this.getCommandManager().getCommands().clear();
 
-        bootstrap.getGeyserLogger().info("Shutdown Finished Sucsessfully.");
+        playerSession.disconnect(LanguageUtils.getPlayerLocaleString("geyser.core.shutdown.kick.message", playerSession.getClientData().getLanguageCode()));
     }
 
     public void addPlayer(GeyserSession player) {
