@@ -27,16 +27,18 @@ package org.geysermc.platform.spigot;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.geysermc.common.PlatformType;
+import org.geysermc.connector.common.PlatformType;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.bootstrap.GeyserBootstrap;
 import org.geysermc.connector.command.CommandManager;
 import org.geysermc.connector.configuration.GeyserConfiguration;
 import org.geysermc.connector.dump.BootstrapDumpInfo;
+import org.geysermc.connector.event.events.geyser.GeyserStartEvent;
 import org.geysermc.connector.network.translators.world.WorldManager;
 import org.geysermc.connector.ping.GeyserLegacyPingPassthrough;
 import org.geysermc.connector.ping.IGeyserPingPassthrough;
 import org.geysermc.connector.utils.FileUtils;
+import org.geysermc.connector.utils.LanguageUtils;
 import org.geysermc.platform.spigot.command.GeyserSpigotCommandExecutor;
 import org.geysermc.platform.spigot.command.GeyserSpigotCommandManager;
 import org.geysermc.platform.spigot.world.GeyserSpigotBlockPlaceListener;
@@ -68,15 +70,15 @@ public class GeyserSpigotPlugin extends JavaPlugin implements GeyserBootstrap {
                 getDataFolder().mkdir();
                 File bukkitConfig = new File("plugins/Geyser-Bukkit/config.yml");
                 if (bukkitConfig.exists()) { // Copy over old configs
-                    getLogger().log(Level.INFO, "Existing config found in the Geyser-Bukkit folder; copying over...");
+                    getLogger().log(Level.INFO, LanguageUtils.getLocaleStringLog("geyser.bootstrap.config.copy_bukkit_config"));
                     Files.copy(bukkitConfig.toPath(), new File(getDataFolder().toString() + "/config.yml").toPath());
-                    getLogger().log(Level.INFO, "Copied!");
+                    getLogger().log(Level.INFO, LanguageUtils.getLocaleStringLog("geyser.bootstrap.config.copied_bukkit_config"));
                 }
             }
             File configFile = FileUtils.fileOrCopiedFromResource(new File(getDataFolder(), "config.yml"), "config.yml", (x) -> x.replaceAll("generateduuid", UUID.randomUUID().toString()));
             this.geyserConfig = FileUtils.loadConfig(configFile, GeyserSpigotConfiguration.class);
         } catch (IOException ex) {
-            getLogger().log(Level.WARNING, "Failed to read/create config.yml! Make sure it's up to date and/or readable+writable!", ex);
+            getLogger().log(Level.WARNING, LanguageUtils.getLocaleStringLog("geyser.config.failed"), ex);
             ex.printStackTrace();
         }
 
@@ -92,14 +94,20 @@ public class GeyserSpigotPlugin extends JavaPlugin implements GeyserBootstrap {
         GeyserConfiguration.checkGeyserConfiguration(geyserConfig, geyserLogger);
 
         if (geyserConfig.getRemote().getAuthType().equals("floodgate") && Bukkit.getPluginManager().getPlugin("floodgate-bukkit") == null) {
-            geyserLogger.severe("Auth type set to Floodgate but Floodgate not found! Disabling...");
+            geyserLogger.severe(LanguageUtils.getLocaleStringLog("geyser.bootstrap.floodgate.not_installed") + " " + LanguageUtils.getLocaleStringLog("geyser.bootstrap.floodgate.disabling"));
             this.getPluginLoader().disablePlugin(this);
             return;
         }
 
         geyserConfig.loadFloodgate(this);
 
-        this.connector = GeyserConnector.start(PlatformType.SPIGOT, this);
+        try {
+            this.connector = GeyserConnector.start(PlatformType.SPIGOT, this);
+        } catch (GeyserConnector.GeyserConnectorException e) {
+            geyserLogger.error(e.getMessage(), e.getCause());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         if (geyserConfig.isLegacyPingPassthrough()) {
             this.geyserSpigotPingPassthrough = GeyserLegacyPingPassthrough.init(connector);
@@ -121,6 +129,9 @@ public class GeyserSpigotPlugin extends JavaPlugin implements GeyserBootstrap {
         Bukkit.getServer().getPluginManager().registerEvents(blockPlaceListener, this);
 
         this.getCommand("geyser").setExecutor(new GeyserSpigotCommandExecutor(connector));
+
+        // Trigger GeyserStart Events
+        connector.getEventManager().triggerEvent(new GeyserStartEvent());
     }
 
     @Override

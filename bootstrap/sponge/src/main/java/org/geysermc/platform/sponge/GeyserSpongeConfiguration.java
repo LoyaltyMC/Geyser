@@ -149,6 +149,17 @@ public class GeyserSpongeConfiguration implements GeyserConfiguration {
         return node.getNode("cache-chunks").getBoolean(false);
     }
 
+
+    @Override
+    public boolean isAllowCustomSkulls() {
+        return node.getNode("allow-custom-skulls").getBoolean(true);
+    }
+
+    @Override
+    public int getCacheImages() {
+        return node.getNode("cache-skins").getInt(0);
+    }
+
     @Override
     public boolean isAboveBedrockNetherBuilding() {
         return node.getNode("above-bedrock-nether-building").getBoolean(false);
@@ -182,6 +193,11 @@ public class GeyserSpongeConfiguration implements GeyserConfiguration {
         @Override
         public String getMotd2() {
             return node.getNode("motd2").getString("GeyserMC");
+        }
+
+        @Override
+        public String getEdition() {
+            return node.getNode("edition").getString("bedrock");
         }
     }
 

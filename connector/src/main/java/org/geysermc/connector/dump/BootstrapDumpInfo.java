@@ -28,7 +28,7 @@ package org.geysermc.connector.dump;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.geysermc.common.PlatformType;
+import org.geysermc.connector.common.PlatformType;
 import org.geysermc.connector.GeyserConnector;
 
 import java.util.List;

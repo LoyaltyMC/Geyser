@@ -35,14 +35,16 @@ import com.velocitypowered.api.plugin.Plugin;
 
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
-import org.geysermc.common.PlatformType;
+import org.geysermc.connector.common.PlatformType;
 import org.geysermc.connector.configuration.GeyserConfiguration;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.bootstrap.GeyserBootstrap;
 import org.geysermc.connector.dump.BootstrapDumpInfo;
+import org.geysermc.connector.event.events.geyser.GeyserStartEvent;
 import org.geysermc.connector.ping.GeyserLegacyPingPassthrough;
 import org.geysermc.connector.ping.IGeyserPingPassthrough;
 import org.geysermc.connector.utils.FileUtils;
+import org.geysermc.connector.utils.LanguageUtils;
 import org.geysermc.platform.velocity.command.GeyserVelocityCommandExecutor;
 import org.geysermc.platform.velocity.command.GeyserVelocityCommandManager;
 import org.slf4j.Logger;
@@ -85,7 +87,7 @@ public class GeyserVelocityPlugin implements GeyserBootstrap {
             File configFile = FileUtils.fileOrCopiedFromResource(configFolder.resolve("config.yml").toFile(), "config.yml", (x) -> x.replaceAll("generateduuid", UUID.randomUUID().toString()));
             this.geyserConfig = FileUtils.loadConfig(configFile, GeyserVelocityConfiguration.class);
         } catch (IOException ex) {
-            logger.warn("Failed to read/create config.yml! Make sure it's up to date and/or readable+writable!", ex);
+            logger.warn(LanguageUtils.getLocaleStringLog("geyser.config.failed"), ex);
             ex.printStackTrace();
         }
 
@@ -103,13 +105,18 @@ public class GeyserVelocityPlugin implements GeyserBootstrap {
         GeyserConfiguration.checkGeyserConfiguration(geyserConfig, geyserLogger);
 
         if (geyserConfig.getRemote().getAuthType().equals("floodgate") && !proxyServer.getPluginManager().getPlugin("floodgate").isPresent()) {
-            geyserLogger.severe("Auth type set to Floodgate but Floodgate not found! Disabling...");
+            geyserLogger.severe(LanguageUtils.getLocaleStringLog("geyser.bootstrap.floodgate.not_installed") + " " + LanguageUtils.getLocaleStringLog("geyser.bootstrap.floodgate.disabling"));
             return;
         }
 
         geyserConfig.loadFloodgate(this, proxyServer, configFolder.toFile());
 
-        this.connector = GeyserConnector.start(PlatformType.VELOCITY, this);
+        try {
+            this.connector = GeyserConnector.start(PlatformType.VELOCITY, this);
+        } catch (GeyserConnector.GeyserConnectorException e) {
+            logger.error(e.getMessage(), e.getCause());
+            return;
+        }
 
         this.geyserCommandManager = new GeyserVelocityCommandManager(connector);
         this.commandManager.register(new GeyserVelocityCommandExecutor(connector), "geyser");
@@ -118,6 +125,9 @@ public class GeyserVelocityPlugin implements GeyserBootstrap {
         } else {
             this.geyserPingPassthrough = new GeyserVelocityPingPassthrough(proxyServer);
         }
+
+        // Trigger GeyserStart Events
+        connector.getEventManager().triggerEvent(new GeyserStartEvent());
     }
 
     @Override

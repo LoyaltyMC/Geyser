@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
-import org.geysermc.common.serializer.AsteriskSerializer;
+import org.geysermc.connector.common.serializer.AsteriskSerializer;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -88,6 +88,12 @@ public abstract class GeyserJacksonConfiguration implements GeyserConfiguration 
     @JsonProperty("cache-chunks")
     private boolean cacheChunks;
 
+    @JsonProperty("allow-custom-skulls")
+    private boolean allowCustomSkulls;
+
+    @JsonProperty("cache-images")
+    private int cacheImages = 180;
+
     @JsonProperty("above-bedrock-nether-building")
     private boolean aboveBedrockNetherBuilding;
 
@@ -101,6 +107,8 @@ public abstract class GeyserJacksonConfiguration implements GeyserConfiguration 
 
         private String motd1;
         private String motd2;
+
+        private String edition = "bedrock";
     }
 
     @Getter

@@ -28,6 +28,8 @@ package org.geysermc.connector.configuration;
 
 import org.geysermc.connector.GeyserLogger;
 
+import org.geysermc.connector.utils.LanguageUtils;
+
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -72,6 +74,10 @@ public interface GeyserConfiguration {
 
     boolean isCacheChunks();
 
+    boolean isAllowCustomSkulls();
+
+    int getCacheImages();
+
     IMetricsInfo getMetrics();
 
     interface IBedrockConfiguration {
@@ -83,6 +89,9 @@ public interface GeyserConfiguration {
         String getMotd1();
 
         String getMotd2();
+
+        String getEdition();
+
     }
 
     interface IRemoteConfiguration {
@@ -111,9 +120,9 @@ public interface GeyserConfiguration {
 
     static void checkGeyserConfiguration(GeyserConfiguration geyserConfig, GeyserLogger geyserLogger) {
         if (geyserConfig.getConfigVersion() < CURRENT_CONFIG_VERSION) {
-            geyserLogger.warning("Your Geyser config is out of date! Please regenerate your config when possible.");
+            geyserLogger.warning(LanguageUtils.getLocaleStringLog("geyser.bootstrap.config.outdated"));
         } else if (geyserConfig.getConfigVersion() > CURRENT_CONFIG_VERSION) {
-            geyserLogger.warning("Your Geyser config is too new! Errors may occur.");
+            geyserLogger.warning(LanguageUtils.getLocaleStringLog("geyser.bootstrap.config.too_new"));
         }
     }
 }

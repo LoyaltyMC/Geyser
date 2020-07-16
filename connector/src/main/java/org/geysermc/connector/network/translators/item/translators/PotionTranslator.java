@@ -45,7 +45,6 @@ public class PotionTranslator extends ItemTranslator {
     private List<ItemEntry> appliedItems;
 
     public PotionTranslator() {
-        appliedItems = ItemRegistry.ITEM_ENTRIES.values().stream().filter(entry -> entry.getJavaIdentifier().endsWith("potion")).collect(Collectors.toList());
     }
 
     @Override
@@ -75,6 +74,9 @@ public class PotionTranslator extends ItemTranslator {
 
     @Override
     public List<ItemEntry> getAppliedItems() {
+        if (appliedItems == null) {
+            appliedItems = ItemRegistry.ITEM_ENTRIES.values().stream().filter(entry -> entry.getJavaIdentifier().endsWith("potion")).collect(Collectors.toList());
+        }
         return appliedItems;
     }
 }

@@ -29,8 +29,9 @@ package org.geysermc.connector.network;
 import com.github.steveice10.mc.protocol.data.message.MessageSerializer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import org.geysermc.common.ping.GeyserPingInfo;
+import org.geysermc.connector.common.ping.GeyserPingInfo;
 import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.GeyserEdition;
 import org.geysermc.connector.utils.MessageUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -148,7 +149,7 @@ public class QueryPacketHandler {
         }
 
         if (connector.getConfig().isPassthroughMotd() && pingInfo != null) {
-            String[] javaMotd = MessageUtils.getBedrockMessage(MessageSerializer.fromString(pingInfo.motd)).split("\n");
+            String[] javaMotd = MessageUtils.getBedrockMessage(MessageSerializer.fromString(pingInfo.getDescription())).split("\n");
             motd = javaMotd[0].trim(); // First line of the motd.
         } else {
             motd = connector.getConfig().getBedrock().getMotd1();
@@ -156,8 +157,8 @@ public class QueryPacketHandler {
 
         // If passthrough player counts is enabled lets get players from the server
         if (connector.getConfig().isPassthroughPlayerCounts() && pingInfo != null) {
-            currentPlayerCount = String.valueOf(pingInfo.currentPlayerCount);
-            maxPlayerCount = String.valueOf(pingInfo.maxPlayerCount);
+            currentPlayerCount = String.valueOf(pingInfo.getPlayers().getOnline());
+            maxPlayerCount = String.valueOf(pingInfo.getPlayers().getMax());
         } else {
             currentPlayerCount = String.valueOf(connector.getPlayers().size());
             maxPlayerCount = String.valueOf(connector.getConfig().getMaxPlayers());
@@ -168,7 +169,7 @@ public class QueryPacketHandler {
         gameData.put("hostname", motd);
         gameData.put("gametype", "SMP");
         gameData.put("game_id", "MINECRAFT");
-        gameData.put("version", GeyserConnector.BEDROCK_PACKET_CODEC.getMinecraftVersion());
+        gameData.put("version", GeyserEdition.INSTANCE.getCodec().getMinecraftVersion());
         gameData.put("plugins", "");
         gameData.put("map", GeyserConnector.NAME);
         gameData.put("numplayers", currentPlayerCount);
@@ -220,7 +221,7 @@ public class QueryPacketHandler {
 
             // Fill player names
             if(pingInfo != null) {
-                for (String username : pingInfo.getPlayers()) {
+                for (String username : pingInfo.getPlayerList()) {
                     query.write(username.getBytes());
                     query.write((byte) 0x00);
                 }

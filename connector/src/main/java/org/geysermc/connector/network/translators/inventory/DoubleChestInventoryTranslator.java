@@ -27,7 +27,7 @@ package org.geysermc.connector.network.translators.inventory;
 
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position;
 import com.nukkitx.math.vector.Vector3i;
-import com.nukkitx.nbt.tag.CompoundTag;
+import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.protocol.bedrock.data.inventory.ContainerType;
 import com.nukkitx.protocol.bedrock.packet.BlockEntityDataPacket;
 import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket;
@@ -37,12 +37,18 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.world.block.BlockTranslator;
 
 public class DoubleChestInventoryTranslator extends ChestInventoryTranslator {
-    private final int blockId;
+    private Integer blockId;
 
     public DoubleChestInventoryTranslator(int size) {
         super(size, 54);
-        int javaBlockState = BlockTranslator.getJavaBlockState("minecraft:chest[facing=north,type=single,waterlogged=false]");
-        this.blockId = BlockTranslator.getBedrockBlockId(javaBlockState);
+    }
+
+    private int getBlockId() {
+        if (blockId == null) {
+            int javaBlockState = BlockTranslator.getJavaBlockState("minecraft:chest[facing=north,type=single,waterlogged=false]");
+            blockId = BlockTranslator.getBedrockBlockId(javaBlockState);
+        }
+        return blockId;
     }
 
     @Override
@@ -53,18 +59,18 @@ public class DoubleChestInventoryTranslator extends ChestInventoryTranslator {
         UpdateBlockPacket blockPacket = new UpdateBlockPacket();
         blockPacket.setDataLayer(0);
         blockPacket.setBlockPosition(position);
-        blockPacket.setRuntimeId(blockId);
+        blockPacket.setRuntimeId(getBlockId());
         blockPacket.getFlags().addAll(UpdateBlockPacket.FLAG_ALL_PRIORITY);
         session.sendUpstreamPacket(blockPacket);
 
-        CompoundTag tag = CompoundTag.builder()
-                .stringTag("id", "Chest")
-                .intTag("x", position.getX())
-                .intTag("y", position.getY())
-                .intTag("z", position.getZ())
-                .intTag("pairx", pairPosition.getX())
-                .intTag("pairz", pairPosition.getZ())
-                .stringTag("CustomName", inventory.getTitle()).buildRootTag();
+        NbtMap tag = NbtMap.builder()
+                .putString("id", "Chest")
+                .putInt("x", position.getX())
+                .putInt("y", position.getY())
+                .putInt("z", position.getZ())
+                .putInt("pairx", pairPosition.getX())
+                .putInt("pairz", pairPosition.getZ())
+                .putString("CustomName", inventory.getTitle()).build();
         BlockEntityDataPacket dataPacket = new BlockEntityDataPacket();
         dataPacket.setData(tag);
         dataPacket.setBlockPosition(position);
@@ -73,18 +79,18 @@ public class DoubleChestInventoryTranslator extends ChestInventoryTranslator {
         blockPacket = new UpdateBlockPacket();
         blockPacket.setDataLayer(0);
         blockPacket.setBlockPosition(pairPosition);
-        blockPacket.setRuntimeId(blockId);
+        blockPacket.setRuntimeId(getBlockId());
         blockPacket.getFlags().addAll(UpdateBlockPacket.FLAG_ALL_PRIORITY);
         session.sendUpstreamPacket(blockPacket);
 
-        tag = CompoundTag.builder()
-                .stringTag("id", "Chest")
-                .intTag("x", pairPosition.getX())
-                .intTag("y", pairPosition.getY())
-                .intTag("z", pairPosition.getZ())
-                .intTag("pairx", position.getX())
-                .intTag("pairz", position.getZ())
-                .stringTag("CustomName", inventory.getTitle()).buildRootTag();
+        tag = NbtMap.builder()
+                .putString("id", "Chest")
+                .putInt("x", pairPosition.getX())
+                .putInt("y", pairPosition.getY())
+                .putInt("z", pairPosition.getZ())
+                .putInt("pairx", position.getX())
+                .putInt("pairz", position.getZ())
+                .putString("CustomName", inventory.getTitle()).build();
         dataPacket = new BlockEntityDataPacket();
         dataPacket.setData(tag);
         dataPacket.setBlockPosition(pairPosition);

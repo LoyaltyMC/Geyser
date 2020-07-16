@@ -33,22 +33,21 @@ import com.github.steveice10.mc.protocol.data.message.TranslationMessage;
 import com.github.steveice10.mc.protocol.data.message.style.ChatColor;
 import com.github.steveice10.mc.protocol.data.message.style.ChatFormat;
 import com.github.steveice10.mc.protocol.data.message.style.MessageStyle;
-import com.google.gson.*;
-import net.kyori.text.Component;
-import net.kyori.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.geysermc.connector.network.session.GeyserSession;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MessageUtils {
 
     private static final Map<String, Integer> COLORS = new HashMap<>();
+    private static final Map<TeamColor, String> TEAM_COLORS = new HashMap<>();
 
     static {
         COLORS.put(ChatColor.BLACK, 0x000000);
@@ -67,11 +66,42 @@ public class MessageUtils {
         COLORS.put(ChatColor.LIGHT_PURPLE, 0xff55ff);
         COLORS.put(ChatColor.YELLOW, 0xffff55);
         COLORS.put(ChatColor.WHITE, 0xffffff);
-    };
 
-    public static List<String> getTranslationParams(List<Message> messages, String locale) {
+        TEAM_COLORS.put(TeamColor.BLACK, getColor(ChatColor.BLACK));
+        TEAM_COLORS.put(TeamColor.DARK_BLUE, getColor(ChatColor.DARK_BLUE));
+        TEAM_COLORS.put(TeamColor.DARK_GREEN, getColor(ChatColor.DARK_GREEN));
+        TEAM_COLORS.put(TeamColor.DARK_AQUA, getColor(ChatColor.DARK_AQUA));
+        TEAM_COLORS.put(TeamColor.DARK_RED, getColor(ChatColor.DARK_RED));
+        TEAM_COLORS.put(TeamColor.DARK_PURPLE, getColor(ChatColor.DARK_PURPLE));
+        TEAM_COLORS.put(TeamColor.GOLD, getColor(ChatColor.GOLD));
+        TEAM_COLORS.put(TeamColor.GRAY, getColor(ChatColor.GRAY));
+        TEAM_COLORS.put(TeamColor.DARK_GRAY, getColor(ChatColor.DARK_GRAY));
+        TEAM_COLORS.put(TeamColor.BLUE, getColor(ChatColor.BLUE));
+        TEAM_COLORS.put(TeamColor.GREEN, getColor(ChatColor.GREEN));
+        TEAM_COLORS.put(TeamColor.AQUA, getColor(ChatColor.AQUA));
+        TEAM_COLORS.put(TeamColor.RED, getColor(ChatColor.RED));
+        TEAM_COLORS.put(TeamColor.LIGHT_PURPLE, getColor(ChatColor.LIGHT_PURPLE));
+        TEAM_COLORS.put(TeamColor.YELLOW, getColor(ChatColor.YELLOW));
+        TEAM_COLORS.put(TeamColor.WHITE, getColor(ChatColor.WHITE));
+        TEAM_COLORS.put(TeamColor.OBFUSCATED, getFormat(Collections.singletonList(ChatFormat.OBFUSCATED)));
+        TEAM_COLORS.put(TeamColor.BOLD, getFormat(Collections.singletonList(ChatFormat.BOLD)));
+        TEAM_COLORS.put(TeamColor.STRIKETHROUGH, getFormat(Collections.singletonList(ChatFormat.STRIKETHROUGH)));
+        TEAM_COLORS.put(TeamColor.ITALIC, getFormat(Collections.singletonList(ChatFormat.ITALIC)));
+    }
+
+    /**
+     * Recursively parse each message from a list for usage in a {@link TranslationMessage}
+     *
+     * @param messages A {@link List} of {@link Message} to parse
+     * @param locale A locale loaded to get the message for
+     * @param parent A {@link Message} to use as the parent (can be null)
+     * @return
+     */
+    public static List<String> getTranslationParams(List<Message> messages, String locale, Message parent) {
         List<String> strings = new ArrayList<>();
         for (Message message : messages) {
+            message = fixMessageStyle(message, parent);
+
             if (message instanceof TranslationMessage) {
                 TranslationMessage translation = (TranslationMessage) message;
 
@@ -88,7 +118,20 @@ public class MessageUtils {
                     strings.add(" - no permission or invalid command!");
                 }
 
-                List<String> furtherParams = getTranslationParams(translation.getWith(), locale);
+                // Collect all params and add format corrections to the end of them
+                List<String> furtherParams = new ArrayList<>();
+                for (String param : getTranslationParams(translation.getWith(), locale, message)) {
+                    String newParam = param;
+                    if (parent.getStyle().getFormats().size() != 0) {
+                        newParam += getFormat(parent.getStyle().getFormats());
+                    }
+                    if (parent.getStyle().getColor() != ChatColor.NONE) {
+                        newParam += getColor(parent.getStyle().getColor());
+                    }
+
+                    furtherParams.add(newParam);
+                }
+
                 if (locale != null) {
                     strings.add(insertParams(LocaleUtils.getLocaleString(translation.getKey(), locale), furtherParams));
                 } else {
@@ -96,8 +139,8 @@ public class MessageUtils {
                 }
             } else {
                 String builder = getFormat(message.getStyle().getFormats()) +
-                        getColorOrParent(message.getStyle());
-                builder += getTranslatedBedrockMessage(message, locale, false);
+                        getColor(message.getStyle().getColor());
+                builder += getTranslatedBedrockMessage(message, locale, false, parent);
                 strings.add(builder);
             }
         }
@@ -105,21 +148,31 @@ public class MessageUtils {
         return strings;
     }
 
-    public static List<String> getTranslationParams(List<Message> messages) {
-        return getTranslationParams(messages, null);
-    }
-
-    public static String getTranslationText(TranslationMessage message) {
-        return getFormat(message.getStyle().getFormats()) + getColorOrParent(message.getStyle())
-                + "%" + message.getKey();
+    public static String getTranslatedBedrockMessage(Message message, String locale) {
+        return getTranslatedBedrockMessage(message, locale, true);
     }
 
     public static String getTranslatedBedrockMessage(Message message, String locale, boolean shouldTranslate) {
+        return getTranslatedBedrockMessage(message, locale, shouldTranslate, null);
+    }
+
+    /**
+     * Translate a given {@link TranslationMessage} to the given locale
+     *
+     * @param message The {@link Message} to send
+     * @param locale
+     * @param shouldTranslate
+     * @param parent
+     * @return
+     */
+    public static String getTranslatedBedrockMessage(Message message, String locale, boolean shouldTranslate, Message parent) {
         JsonParser parser = new JsonParser();
         if (isMessage(message.toString())) {
             JsonObject object = parser.parse(message.toString()).getAsJsonObject();
-            message = MessageSerializer.fromJson(formatJson(object));
+            message = MessageSerializer.fromJson(object);
         }
+
+        message = fixMessageStyle(message, parent);
 
         String messageText = (message instanceof TranslationMessage) ? ((TranslationMessage) message).getKey() : ((TextMessage) message).getText();
         if (locale != null && shouldTranslate) {
@@ -128,21 +181,21 @@ public class MessageUtils {
 
         StringBuilder builder = new StringBuilder();
         builder.append(getFormat(message.getStyle().getFormats()));
-        builder.append(getColorOrParent(message.getStyle()));
+        builder.append(getColor(message.getStyle().getColor()));
         builder.append(messageText);
 
         for (Message msg : message.getExtra()) {
             builder.append(getFormat(msg.getStyle().getFormats()));
-            builder.append(getColorOrParent(msg.getStyle()));
+            builder.append(getColor(msg.getStyle().getColor()));
             if (!(msg.toString() == null)) {
                 boolean isTranslationMessage = (msg instanceof TranslationMessage);
                 String extraText = "";
 
                 if (isTranslationMessage) {
-                    List<String> paramsTranslated =  getTranslationParams(((TranslationMessage) msg).getWith(), locale);
-                    extraText = insertParams(getTranslatedBedrockMessage(msg, locale, isTranslationMessage), paramsTranslated);
+                    List<String> paramsTranslated =  getTranslationParams(((TranslationMessage) msg).getWith(), locale, message);
+                    extraText = insertParams(getTranslatedBedrockMessage(msg, locale, isTranslationMessage, message), paramsTranslated);
                 } else {
-                    extraText = getTranslatedBedrockMessage(msg, locale, isTranslationMessage);
+                    extraText = getTranslatedBedrockMessage(msg, locale, isTranslationMessage, message);
                 }
 
                 builder.append(extraText);
@@ -153,8 +206,30 @@ public class MessageUtils {
         return builder.toString();
     }
 
-    public static String getTranslatedBedrockMessage(Message message, String locale) {
-        return getTranslatedBedrockMessage(message, locale, true);
+    /**
+     * If the passed {@link Message} color or format are empty then copy from parent
+     *
+     * @param message {@link Message} to update
+     * @param parent Parent {@link Message} for style
+     * @return The updated {@link Message}
+     */
+    private static Message fixMessageStyle(Message message, Message parent) {
+        if (parent == null) {
+            return message;
+        }
+        MessageStyle.Builder styleBuilder = message.getStyle().toBuilder();
+
+        // Copy color from parent
+        if (message.getStyle().getColor() == ChatColor.NONE) {
+            styleBuilder.color(parent.getStyle().getColor());
+        }
+
+        // Copy formatting from parent
+        if (message.getStyle().getFormats().size() == 0) {
+            styleBuilder.formats(parent.getStyle().getFormats());
+        }
+
+        return message.toBuilder().style(styleBuilder.build()).build();
     }
 
     public static String getBedrockMessage(Message message) {
@@ -188,12 +263,12 @@ public class MessageUtils {
     }
 
     public static Component phraseJavaMessage(String message) {
-        return GsonComponentSerializer.INSTANCE.deserialize(message);
+        return GsonComponentSerializer.gson().deserialize(message);
     }
 
     public static String getJavaMessage(String message) {
         Component component = LegacyComponentSerializer.legacy().deserialize(message);
-        return GsonComponentSerializer.INSTANCE.serialize(component);
+        return GsonComponentSerializer.gson().serialize(component);
     }
 
     /**
@@ -223,22 +298,6 @@ public class MessageUtils {
         newMessage = newMessage.replaceAll("%r", "MISSING!");
 
         return newMessage;
-    }
-
-    /**
-     * Gets the colour for the message style or fetches it from the parent (recursive)
-     *
-     * @param style The style to get the colour from
-     * @return Colour string to be used
-     */
-    private static String getColorOrParent(MessageStyle style) {
-        String color = style.getColor();
-
-        /*if (color == ChatColor.NONE && style.getParent() != null) {
-            return getColorOrParent(style.getParent());
-        }*/
-
-        return getColor(color);
     }
 
     /**
@@ -332,7 +391,8 @@ public class MessageUtils {
 
         for (Map.Entry<String, Integer> testColor : COLORS.entrySet()) {
             if (testColor.getValue() == rgb) {
-                return testColor.getKey();
+                closest = testColor.getKey();
+                break;
             }
 
             int testR = (testColor.getValue() >> 16) & 0xFF;
@@ -400,7 +460,7 @@ public class MessageUtils {
         try {
             JsonObject object = parser.parse(text).getAsJsonObject();
             try {
-                MessageSerializer.fromJson(formatJson(object));
+                MessageSerializer.fromJson(object);
             } catch (Exception ex) {
                 return false;
             }
@@ -410,42 +470,8 @@ public class MessageUtils {
         return true;
     }
 
-    public static JsonObject formatJson(JsonObject object) {
-        if (object.has("hoverEvent")) {
-            JsonObject sub = (JsonObject) object.get("hoverEvent");
-            JsonElement element = sub.get("value");
-
-            if (element instanceof JsonArray) {
-                JsonObject newobj = new JsonObject();
-                newobj.add("extra", element);
-                newobj.addProperty("text", "");
-                sub.remove("value");
-                sub.add("value", newobj);
-            }
-        }
-
-        if (object.has("extra")) {
-            JsonArray a = object.getAsJsonArray("extra");
-            for (int i = 0; i < a.size(); i++) {
-                if (!(a.get(i) instanceof JsonPrimitive))
-                    formatJson((JsonObject) a.get(i));
-            }
-        }
-        return object;
-    }
-
     public static String toChatColor(TeamColor teamColor) {
-//        for (ChatColor color : ChatColor.) {
-//            if (color.name().equals(teamColor.name())) {
-//                return getColor(color);
-//            }
-//        }
-//        for (ChatFormat format : ChatFormat.values()) {
-//            if (format.name().equals(teamColor.name())) {
-//                return getFormat(Collections.singletonList(format));
-//            }
-//        } Not dealing with this
-        return "";
+        return TEAM_COLORS.getOrDefault(teamColor, "");
     }
 
     /**
@@ -457,8 +483,7 @@ public class MessageUtils {
      */
     public static boolean isTooLong(String message, GeyserSession session) {
         if (message.length() > 256) {
-            // TODO: Add Geyser localization and translate this based on language
-            session.sendMessage("Your message is bigger than 256 characters (" + message.length() + ") so it has not been sent.");
+            session.sendMessage(LanguageUtils.getPlayerLocaleString("geyser.chat.too_long", session.getClientData().getLanguageCode(), message.length()));
             return true;
         }
 

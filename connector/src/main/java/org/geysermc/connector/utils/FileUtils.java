@@ -28,11 +28,16 @@ package org.geysermc.connector.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.event.EventManager;
+import org.geysermc.connector.event.events.geyser.ResourceReadEvent;
+import org.geysermc.connector.GeyserEdition;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.function.Function;
 
 public class FileUtils {
@@ -133,10 +138,20 @@ public class FileUtils {
      * @return InputStream of the given resource
      */
     public static InputStream getResource(String resource) {
-        InputStream stream = FileUtils.class.getClassLoader().getResourceAsStream(resource);
-        if (stream == null) {
-            throw new AssertionError("Unable to find resource: " + resource);
+        String resourceName = GeyserEdition.INSTANCE.getEdition() + "/" + resource;
+
+        // First try open file under a resources folder. We use this try format so we don't close it
+        try {
+            return new FileInputStream(Paths.get("resources", resourceName).toFile());
+        } catch (IOException ignored) { }
+
+        InputStream stream = FileUtils.class.getClassLoader().getResourceAsStream(resourceName);
+
+        ResourceReadEvent event = EventManager.getInstance().triggerEvent(new ResourceReadEvent(resource, stream)).getEvent();
+
+        if (event.getInputStream() == null) {
+            throw new AssertionError(LanguageUtils.getLocaleStringLog("geyser.toolbox.fail.resource", resourceName));
         }
-        return stream;
+        return event.getInputStream();
     }
 }

@@ -10,12 +10,12 @@
         <relativePath>../</relativePath>
     </parent>
     <artifactId>connector</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
     <dependencies>
         <dependency>
             <groupId>org.geysermc</groupId>
             <artifactId>common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -30,9 +30,23 @@
             <version>2.9.8</version>
             <scope>compile</scope>
         </dependency>
+        <!-- Current Bedrock Protocol -->
         <dependency>
             <groupId>com.nukkitx.protocol</groupId>
             <artifactId>bedrock-v407</artifactId>
+            <version>2.6.0-SNAPSHOT</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.sf.trove4j</groupId>
+                    <artifactId>trove</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- Current MCEE Protocol -->
+        <dependency>
+            <groupId>com.nukkitx.protocol</groupId>
+            <artifactId>bedrock-v363</artifactId>
             <version>2.6.0-SNAPSHOT</version>
             <scope>compile</scope>
             <exclusions>
@@ -105,7 +119,7 @@
         <dependency>
             <groupId>com.github.steveice10</groupId>
             <artifactId>mcprotocollib</artifactId>
-            <version>1.16.1-SNAPSHOT</version>
+            <version>46b46001f6</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
@@ -127,20 +141,20 @@
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
-            <artifactId>text-api</artifactId>
-            <version>3.0.3</version>
+            <artifactId>adventure-api</artifactId>
+            <version>4.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
-            <artifactId>text-serializer-gson</artifactId>
-            <version>3.0.3</version>
+            <artifactId>adventure-text-serializer-gson</artifactId>
+            <version>4.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.kyori</groupId>
-            <artifactId>text-serializer-legacy</artifactId>
-            <version>3.0.3</version>
+            <artifactId>adventure-text-serializer-legacy</artifactId>
+            <version>4.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
