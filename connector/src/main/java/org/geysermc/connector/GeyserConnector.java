@@ -127,7 +127,10 @@ public class GeyserConnector {
 
         logger.info("******************************************");
         logger.info("");
-        logger.info(LanguageUtils.getLocaleStringLog("geyser.core.load", NAME, VERSION));
+        logger.info(LanguageUtils.getLocaleStringLog("geyser.core.load1", VERSION));
+        logger.info("");
+        logger.info(LanguageUtils.getLocaleStringLog("geyser.core.load2"));
+        logger.info(LanguageUtils.getLocaleStringLog("geyser.core.load3"));
         logger.info("");
         logger.info("******************************************");
 
