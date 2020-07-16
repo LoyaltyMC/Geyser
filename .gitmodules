@@ -4,6 +4,3 @@
 [submodule "connector/src/main/resources/education/mappings"]
 	path = connector/src/main/resources/education/mappings
 	url = https://github.com/Bundabrg/mappings-education.git
-[submodule "connector/src/main/resources/languages"]
-	path = connector/src/main/resources/languages
-	url = https://github.com/Loganh4005/languages.git
