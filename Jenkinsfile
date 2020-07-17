@@ -22,7 +22,7 @@ pipeline {
 
         stage ('Deploy') {
             when {
-                branch "Unstable/bleeding_edge_master"
+                branch "master"
             }
             steps {
                 sh 'echo Skipping'
