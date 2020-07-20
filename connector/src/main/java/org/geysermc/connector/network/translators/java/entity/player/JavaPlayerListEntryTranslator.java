@@ -30,7 +30,6 @@ import org.geysermc.connector.entity.PlayerEntity;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
-import org.geysermc.connector.utils.MessageUtils;
 import org.geysermc.connector.utils.SkinUtils;
 
 import com.github.steveice10.mc.protocol.data.game.PlayerListEntry;
@@ -82,9 +81,19 @@ public class JavaPlayerListEntryTranslator extends PacketTranslator<ServerPlayer
                     playerEntity.setProfile(entry.getProfile());
                     playerEntity.setPlayerList(true);
                     playerEntity.setValid(true);
-                    playerEntity.setDisplayName(entry.getDisplayName() != null ? MessageUtils.getBedrockMessage(entry.getDisplayName()) : null);
 
-                    PlayerListPacket.Entry playerListEntry = SkinUtils.buildCachedEntry(session, playerEntity);
+                    PlayerListPacket.Entry playerListEntry = SkinUtils.buildCachedEntry(entry.getProfile(), playerEntity.getGeyserId());
+                    if (self) {
+                        // Copy the entry with our identity instead.
+                        PlayerListPacket.Entry copy = new PlayerListPacket.Entry(session.getAuthData().getUUID());
+                        copy.setName(playerListEntry.getName());
+                        copy.setEntityId(playerListEntry.getEntityId());
+                        copy.setSkin(playerListEntry.getSkin());
+                        copy.setXuid(playerListEntry.getXuid());
+                        copy.setPlatformChatId(playerListEntry.getPlatformChatId());
+                        copy.setTeacher(playerListEntry.isTeacher());
+                        playerListEntry = copy;
+                    }
 
                     translate.getEntries().add(playerListEntry);
                     break;
@@ -94,20 +103,15 @@ public class JavaPlayerListEntryTranslator extends PacketTranslator<ServerPlayer
                         // remove from tablist but player entity is still there
                         entity.setPlayerList(false);
                     } else {
+                        // just remove it from caching
                         if (entity == null) {
-                            // just remove it from caching
                             session.getEntityCache().removePlayerEntity(entry.getProfile().getId());
                         } else {
                             entity.setPlayerList(false);
                             session.getEntityCache().removeEntity(entity, false);
                         }
                     }
-                    if (entity == session.getPlayerEntity()) {
-                        // If removing ourself we use our AuthData UUID
-                        translate.getEntries().add(new PlayerListPacket.Entry(session.getAuthData().getUUID()));
-                    } else {
-                        translate.getEntries().add(new PlayerListPacket.Entry(entry.getProfile().getId()));
-                    }
+                    translate.getEntries().add(new PlayerListPacket.Entry(entry.getProfile().getId()));
                     break;
             }
         }
