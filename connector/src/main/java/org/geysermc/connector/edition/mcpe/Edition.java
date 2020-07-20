@@ -210,7 +210,7 @@ import org.geysermc.connector.network.translators.bedrock.BedrockBlockEntityData
 import org.geysermc.connector.network.translators.bedrock.BedrockBlockPickRequestPacketTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockCommandRequestTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockContainerCloseTranslator;
-import org.geysermc.connector.network.translators.bedrock.BedrockEmoteTranslator;
+//import org.geysermc.connector.network.translators.bedrock.BedrockEmoteTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockEntityEventTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockInteractTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockInventoryTransactionTranslator;
@@ -385,7 +385,7 @@ public class Edition extends GeyserEdition {
                 .bedrockPacketTranslator(BlockPickRequestPacket.class, new BedrockBlockPickRequestPacketTranslator())
                 .bedrockPacketTranslator(CommandRequestPacket.class, new BedrockCommandRequestTranslator())
                 .bedrockPacketTranslator(ContainerClosePacket.class, new BedrockContainerCloseTranslator())
-                .bedrockPacketTranslator(EmoteListPacket.class, new BedrockEmoteTranslator())
+               // .bedrockPacketTranslator(EmoteListPacket.class, new BedrockEmoteTranslator())
                 .bedrockPacketTranslator(EntityEventPacket.class, new BedrockEntityEventTranslator())
                 .bedrockPacketTranslator(InteractPacket.class, new BedrockInteractTranslator())
                 .bedrockPacketTranslator(InventoryTransactionPacket.class, new BedrockInventoryTransactionTranslator())
