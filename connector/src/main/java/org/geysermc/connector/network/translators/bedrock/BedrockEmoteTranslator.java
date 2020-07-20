@@ -32,7 +32,7 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
 
-@Translator(packet = EmotePacket.class)
+//@Translator(packet = EmotePacket.class)
 public class BedrockEmoteTranslator extends PacketTranslator<EmotePacket> {
 
     @Override
