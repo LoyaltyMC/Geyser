@@ -30,6 +30,7 @@ import org.geysermc.connector.entity.PlayerEntity;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
+import org.geysermc.connector.utils.MessageUtils;
 import org.geysermc.connector.utils.SkinUtils;
 
 import com.github.steveice10.mc.protocol.data.game.PlayerListEntry;
@@ -81,6 +82,7 @@ public class JavaPlayerListEntryTranslator extends PacketTranslator<ServerPlayer
                     playerEntity.setProfile(entry.getProfile());
                     playerEntity.setPlayerList(true);
                     playerEntity.setValid(true);
+                    playerEntity.setDisplayName(entry.getDisplayName() != null ? MessageUtils.getBedrockMessage(entry.getDisplayName()) : null);
 
                     PlayerListPacket.Entry playerListEntry = SkinUtils.buildCachedEntry(session, playerEntity);
                     if (self) {
@@ -111,7 +113,12 @@ public class JavaPlayerListEntryTranslator extends PacketTranslator<ServerPlayer
                             session.getEntityCache().removeEntity(entity, false);
                         }
                     }
-                    translate.getEntries().add(new PlayerListPacket.Entry(entry.getProfile().getId()));
+                    if (entity == session.getPlayerEntity()) {
+                        // If removing ourself we use our AuthData UUID
+                        translate.getEntries().add(new PlayerListPacket.Entry(session.getAuthData().getUUID()));
+                    } else {
+                        translate.getEntries().add(new PlayerListPacket.Entry(entry.getProfile().getId()));
+                    }
                     break;
             }
         }
