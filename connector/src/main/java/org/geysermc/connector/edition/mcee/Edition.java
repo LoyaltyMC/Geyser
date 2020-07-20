@@ -401,7 +401,7 @@ public class Edition extends GeyserEdition {
                 .bedrockPacketTranslator(BlockPickRequestPacket.class, new BedrockBlockPickRequestPacketTranslator())
                 .bedrockPacketTranslator(CommandRequestPacket.class, new BedrockCommandRequestTranslator())
                 .bedrockPacketTranslator(ContainerClosePacket.class, new BedrockContainerCloseTranslator())
-                .bedrockPacketTranslator(EmoteListPacket.class, new BedrockEmoteTranslator())
+                //.bedrockPacketTranslator(EmoteListPacket.class, new BedrockEmoteTranslator())
                 .bedrockPacketTranslator(EntityEventPacket.class, new BedrockEntityEventTranslator())
                 .bedrockPacketTranslator(InteractPacket.class, new BedrockInteractTranslator())
                 .bedrockPacketTranslator(InventoryTransactionPacket.class, new BedrockInventoryTransactionTranslator())
