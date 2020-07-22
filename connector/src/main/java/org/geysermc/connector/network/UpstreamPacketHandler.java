@@ -118,9 +118,7 @@ public class UpstreamPacketHandler extends LoggingPacketHandler {
 
         if (!session.isLoggedIn() && !session.isLoggingIn() && session.getConnector().getAuthType() == AuthType.ONLINE && !session.isUsingSavedCredentials()) {
             // TODO it is safer to key authentication on something that won't change (UUID, not username)
-            if (!couldLoginUserByName(session.getAuthData().getName())) {
-                LoginEncryptionUtils.showLoginWindow(session);
-            }
+            LoginEncryptionUtils.showLoginWindow(session);
             // else we were able to log the user in
         }
         return translateAndDefault(packet);
