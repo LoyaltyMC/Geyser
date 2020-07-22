@@ -60,6 +60,7 @@ import org.geysermc.common.window.FormWindow;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.GeyserEdition;
 import org.geysermc.connector.command.CommandSender;
+import org.geysermc.connector.configuration.GeyserConfiguration;
 import org.geysermc.connector.common.AuthType;
 import org.geysermc.connector.entity.Entity;
 import org.geysermc.connector.entity.PlayerEntity;
@@ -70,6 +71,7 @@ import org.geysermc.connector.event.events.network.SessionConnectEvent;
 import org.geysermc.connector.event.events.network.SessionDisconnectEvent;
 import org.geysermc.connector.event.events.packet.DownstreamPacketReceiveEvent;
 import org.geysermc.connector.event.events.packet.DownstreamPacketSendEvent;
+import org.geysermc.connector.event.events.packet.UpstreamPacketReceiveEvent;
 import org.geysermc.connector.event.events.packet.UpstreamPacketSendEvent;
 import org.geysermc.connector.inventory.PlayerInventory;
 import org.geysermc.connector.network.remote.RemoteServer;
@@ -95,6 +97,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -118,7 +121,7 @@ public class GeyserSession implements CommandSender {
     private InventoryCache inventoryCache;
     private ScoreboardCache scoreboardCache;
     private WindowCache windowCache;
-    private Map<Position, PlayerEntity> skullCache = new HashMap<>();
+    private Map<Position, PlayerEntity> skullCache = new ConcurrentHashMap<>();
     @Setter
     private TeleportCache teleportCache;
 
@@ -244,28 +247,33 @@ public class GeyserSession implements CommandSender {
         startGame();
         this.remoteServer = remoteServer;
 
-        // These packets are sent a bit later to ensure the StartGame packet is processed first
-        connector.getGeneralThreadPool().schedule(() -> {
-            ChunkUtils.sendEmptyChunks(this, playerEntity.getPosition().toInt(), 0, false);
+        if (EventManager.getInstance().triggerEvent(new GeyserLoginEvent(this)).isCancelled()) {
+            return;
+        }
 
-            BiomeDefinitionListPacket biomeDefinitionListPacket = new BiomeDefinitionListPacket();
-            biomeDefinitionListPacket.setDefinitions(BiomeTranslator.BIOMES);
-            sendUpstreamPacket(biomeDefinitionListPacket);
-
-            AvailableEntityIdentifiersPacket entityPacket = new AvailableEntityIdentifiersPacket();
-            entityPacket.setIdentifiers(EntityIdentifierRegistry.ENTITY_IDENTIFIERS);
-            sendUpstreamPacket(entityPacket);
-
-            if (SHIM != null) {
-                SHIM.creativeContent(this);
+        if (connector.getAuthType() != AuthType.ONLINE) {
+            if (connector.getAuthType() == AuthType.OFFLINE) {
+                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.offline"));
             } else {
-                CreativeContentPacket creativePacket = new CreativeContentPacket();
-                for (int i = 0; i < ItemRegistry.CREATIVE_ITEMS.length; i++) {
-                    creativePacket.getEntries().put(i + 1, ItemRegistry.CREATIVE_ITEMS[i]);
-                }
-                sendUpstreamPacket(creativePacket);
+                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.floodgate"));
             }
+            authenticate(authData.getName());
+        } else if (connector.getConfig().getUserAuths() != null && connector.getConfig().getUserAuths().containsKey(authData.getName())) {
+            connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.stored_credentials", getAuthData().getName()));
+            usingSavedCredentials = true;
+            GeyserConfiguration.IUserAuthenticationInfo info = connector.getConfig().getUserAuths().get(authData.getName());
+            authenticate(info.getEmail(), info.getPassword());
+        } else { // Show login form
+            playerEntity.setDimension(DimensionUtils.THE_END);
+            initialize();
+            ChunkUtils.sendEmptyChunks(this, playerEntity.getPosition().toInt(), 0, false);
+            start();
+        }
+    }
 
+    public void start() {
+        if (!started) {
+            started = true;
             PlayStatusPacket playStatusPacket = new PlayStatusPacket();
             playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
             sendUpstreamPacket(playStatusPacket);
@@ -278,21 +286,32 @@ public class GeyserSession implements CommandSender {
             attributes.add(new AttributeData("minecraft:movement", 0.0f, 1024f, 0.1f, 0.1f));
             attributesPacket.setAttributes(attributes);
             upstream.sendPacket(attributesPacket);
-        }, 500, TimeUnit.MILLISECONDS);
+        }
     }
 
-    public void login() {
-        if (EventManager.getInstance().triggerEvent(new GeyserLoginEvent(this)).isCancelled()) {
+    public void initialize() {
+        if (getUpstream().isInitialized()) {
             return;
         }
 
-        if (connector.getAuthType() != AuthType.ONLINE) {
-            if (connector.getAuthType() == AuthType.OFFLINE) {
-                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.offline"));
-            } else {
-                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.floodgate"));
+        startGame();
+
+        BiomeDefinitionListPacket biomeDefinitionListPacket = new BiomeDefinitionListPacket();
+        biomeDefinitionListPacket.setDefinitions(BiomeTranslator.BIOMES);
+        upstream.sendPacket(biomeDefinitionListPacket);
+
+        AvailableEntityIdentifiersPacket entityPacket = new AvailableEntityIdentifiersPacket();
+        entityPacket.setIdentifiers(EntityIdentifierRegistry.ENTITY_IDENTIFIERS);
+        upstream.sendPacket(entityPacket);
+
+        if (SHIM != null) {
+            SHIM.creativeContent(this);
+        } else {
+            CreativeContentPacket creativePacket = new CreativeContentPacket();
+            for (int i = 0; i < ItemRegistry.CREATIVE_ITEMS.length; i++) {
+                creativePacket.getEntries().put(i + 1, ItemRegistry.CREATIVE_ITEMS[i]);
             }
-            authenticate(authData.getName());
+            sendUpstreamPacket(creativePacket);
         }
     }
 
@@ -301,9 +320,12 @@ public class GeyserSession implements CommandSender {
     }
 
     public void authenticate(String username, String password) {
-        if (EventManager.getInstance().triggerEvent(new GeyserAuthenticationEvent(this, username, password)).isCancelled()) {
+        EventManager.TriggerResult<GeyserAuthenticationEvent> result = EventManager.getInstance().triggerEvent(new GeyserAuthenticationEvent(this, username, password));
+        if (result.isCancelled()) {
             return;
         }
+        final String user = result.getEvent().getUsername();
+        final String pass = result.getEvent().getPassword();
 
         if (loggedIn) {
             connector.getLogger().severe(LanguageUtils.getLocaleStringLog("geyser.auth.already_loggedin", username));
@@ -314,10 +336,10 @@ public class GeyserSession implements CommandSender {
         // new thread so clients don't timeout
         new Thread(() -> {
             try {
-                if (password != null && !password.isEmpty()) {
-                    protocol = new MinecraftProtocol(username.replace(" ","_"), password);
+                if (pass != null && !pass.isEmpty()) {
+                    protocol = new MinecraftProtocol(user.replace(" ","_"), pass);
                 } else {
-                    protocol = new MinecraftProtocol(username.replace(" ","_"));
+                    protocol = new MinecraftProtocol(user.replace(" ","_"));
                 }
 
                 boolean floodgate = connector.getAuthType() == AuthType.FLOODGATE;
@@ -375,6 +397,11 @@ public class GeyserSession implements CommandSender {
                     public void connected(ConnectedEvent event) {
                         loggingIn = false;
                         loggedIn = true;
+                        if (protocol.getProfile() == null) {
+                            // Java account is offline
+                            disconnect(LanguageUtils.getPlayerLocaleString("geyser.network.remote.invalid_account", clientData.getLanguageCode()));
+                            return;
+                        }
                         connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.network.remote.connect", authData.getName(), protocol.getProfile().getName(), remoteServer.getAddress()));
                         playerEntity.setUuid(protocol.getProfile().getId());
                         playerEntity.setUsername(protocol.getProfile().getName());
@@ -518,6 +545,18 @@ public class GeyserSession implements CommandSender {
     }
 
     public void sendForm(FormWindow window, int id) {
+        if (!getUpstream().isInitialized()) {
+            initialize();
+            start();
+            EventManager.getInstance().on(UpstreamPacketReceiveEvent.class, (h, e) -> {
+                h.unregister();
+                windowCache.showWindow(window, id);
+            })
+                    .filter(SetLocalPlayerAsInitializedPacket.class)
+                    .build();
+            return;
+        }
+
         windowCache.showWindow(window, id);
     }
 
@@ -536,6 +575,18 @@ public class GeyserSession implements CommandSender {
     }
 
     public void sendForm(FormWindow window) {
+        if (!getUpstream().isInitialized()) {
+            initialize();
+            start();
+            EventManager.getInstance().on(UpstreamPacketReceiveEvent.class, (h,e) -> {
+                h.unregister();
+                windowCache.showWindow(window);
+            })
+                    .filter(SetLocalPlayerAsInitializedPacket.class)
+                    .build();
+            return;
+        }
+
         windowCache.showWindow(window);
     }
 

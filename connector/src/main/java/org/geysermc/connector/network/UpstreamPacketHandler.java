@@ -58,10 +58,11 @@ public class UpstreamPacketHandler extends LoggingPacketHandler {
         }
 
         if (loginPacket.getProtocolVersion() > connector.getEdition().getCodec().getProtocolVersion()) {
-            session.disconnect(LanguageUtils.getPlayerLocaleString("geyser.network.outdated.server", session.getClientData().getLanguageCode(), GeyserEdition.INSTANCE.getCodec().getMinecraftVersion()));
+            // Too early to determine session locale
+            session.disconnect(LanguageUtils.getLocaleStringLog("geyser.network.outdated.server", connector.getEdition().getCodec().getMinecraftVersion()));
             return true;
         } else if (loginPacket.getProtocolVersion() < connector.getEdition().getCodec().getProtocolVersion()) {
-            session.disconnect(LanguageUtils.getPlayerLocaleString("geyser.network.outdated.client", session.getClientData().getLanguageCode(), GeyserEdition.INSTANCE.getCodec().getMinecraftVersion()));
+            session.disconnect(LanguageUtils.getLocaleStringLog("geyser.network.outdated.client", connector.getEdition().getCodec().getMinecraftVersion()));
             return true;
         }
 
@@ -111,28 +112,11 @@ public class UpstreamPacketHandler extends LoggingPacketHandler {
         return LoginEncryptionUtils.authenticateFromForm(session, connector, packet.getFormId(), packet.getFormData());
     }
 
-    private boolean couldLoginUserByName(String bedrockUsername) {
-        if (connector.getConfig().getUserAuths() != null) {
-            GeyserConfiguration.IUserAuthenticationInfo info = connector.getConfig().getUserAuths().get(bedrockUsername);
-
-            if (info != null) {
-                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.stored_credentials", session.getAuthData().getName()));
-                session.authenticate(info.getEmail(), info.getPassword());
-
-                // TODO send a message to bedrock user telling them they are connected (if nothing like a motd
-                //      somes from the Java server w/in a few seconds)
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     @Override
     public boolean handle(SetLocalPlayerAsInitializedPacket packet) {
         LanguageUtils.loadGeyserLocale(session.getClientData().getLanguageCode());
 
-        if (!session.isLoggedIn() && !session.isLoggingIn() && session.getConnector().getAuthType() == AuthType.ONLINE) {
+        if (!session.isLoggedIn() && !session.isLoggingIn() && session.getConnector().getAuthType() == AuthType.ONLINE && !session.isUsingSavedCredentials()) {
             // TODO it is safer to key authentication on something that won't change (UUID, not username)
             if (!couldLoginUserByName(session.getAuthData().getName())) {
                 LoginEncryptionUtils.showLoginWindow(session);

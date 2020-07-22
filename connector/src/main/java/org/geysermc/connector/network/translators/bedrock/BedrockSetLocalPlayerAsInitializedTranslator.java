@@ -25,6 +25,7 @@
 
 package org.geysermc.connector.network.translators.bedrock;
 
+import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
 import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import org.geysermc.connector.entity.PlayerEntity;
 import org.geysermc.connector.network.session.GeyserSession;
@@ -50,7 +51,13 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
                         SkinUtils.requestAndHandleSkinAndCape(entity, session, null);
                         entity.sendPlayer(session);
                     }
+
+                    if (entity.isPlayerList()) {
+                        playerListPacket.getEntries().add(SkinUtils.buildCachedEntry(session, entity));
+                    }
                 }
+
+                session.getUpstream().sendPacket(playerListPacket);
 
                 // Send Skulls
                 for (PlayerEntity entity : session.getSkullCache().values()) {
