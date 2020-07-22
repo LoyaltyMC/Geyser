@@ -28,6 +28,7 @@ package org.geysermc.platform.spigot.world;
 
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
+import org.bukkit.ChunkSnapshot;
 import org.bukkit.block.Block;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.world.WorldManager;
@@ -39,6 +40,7 @@ import us.myles.ViaVersion.protocols.protocol1_16to1_15_2.data.MappingData;
 public class GeyserSpigotWorldManager extends WorldManager {
 
     private final boolean isLegacy;
+    private final boolean use3dBiomes;
     // You need ViaVersion to connect to an older server with Geyser.
     // However, we still check for ViaVersion in case there's some other way that gets Geyser on a pre-1.13 Bukkit server
     private final boolean isViaVersion;
@@ -69,5 +71,30 @@ public class GeyserSpigotWorldManager extends WorldManager {
         } else {
             return BlockTranslator.AIR;
         }
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public int[] getBiomeDataAt(GeyserSession session, int x, int z) {
+        if (session.getPlayerEntity() == null) {
+            return null;
+        }
+        int[] biomeData = new int[1024];
+        ChunkSnapshot chunk = Bukkit.getPlayer(session.getPlayerEntity().getUsername()).getWorld().getChunkAt(x, z).getChunkSnapshot(true, true, true);
+        for (int localX = 0; localX < 16; localX = localX + 4) {
+            for (int localY = 0; localY < 255; localY = localY + 4) {
+                for (int localZ = 0; localZ < 16; localZ = localZ + 4) {
+                    // Index is based on wiki.vg's index requirements
+                    final int i = ((localY >> 2) & 63) << 4 | ((localZ >> 2) & 3) << 2 | ((localX >> 2) & 3);
+                    // 3D biomes didn't exist until 1.15
+                    if (use3dBiomes) {
+                        biomeData[i] = chunk.getBiome(localX, localY, localZ).ordinal();
+                    } else {
+                        biomeData[i] = chunk.getBiome(localX, localZ).ordinal();
+                    }
+                }
+            }
+        }
+        return biomeData;
     }
 }
