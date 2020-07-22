@@ -29,6 +29,8 @@ import com.github.steveice10.mc.protocol.data.game.entity.player.PositionElement
 import com.github.steveice10.mc.protocol.packet.ingame.client.world.ClientTeleportConfirmPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.server.entity.player.ServerPlayerPositionRotationPacket;
 import com.nukkitx.math.vector.Vector3f;
+import com.nukkitx.protocol.bedrock.data.entity.EntityEventType;
+import com.nukkitx.protocol.bedrock.packet.EntityEventPacket;
 import com.nukkitx.protocol.bedrock.packet.MovePlayerPacket;
 import com.nukkitx.protocol.bedrock.packet.RespawnPacket;
 import com.nukkitx.protocol.bedrock.packet.SetEntityDataPacket;
@@ -59,10 +61,16 @@ public class JavaPlayerPositionRotationTranslator extends PacketTranslator<Serve
             entity.setRotation(Vector3f.from(packet.getYaw(), packet.getPitch(), packet.getYaw()));
 
             RespawnPacket respawnPacket = new RespawnPacket();
-            respawnPacket.setRuntimeEntityId(0); // Bedrock server behavior
+            respawnPacket.setRuntimeEntityId(entity.getGeyserId());
             respawnPacket.setPosition(pos);
             respawnPacket.setState(RespawnPacket.State.SERVER_READY);
             session.sendUpstreamPacket(respawnPacket);
+
+            EntityEventPacket eventPacket = new EntityEventPacket();
+            eventPacket.setRuntimeEntityId(entity.getGeyserId());
+            eventPacket.setType(EntityEventType.RESPAWN);
+            eventPacket.setData(0);
+            session.sendUpstreamPacket(eventPacket);
 
             SetEntityDataPacket entityDataPacket = new SetEntityDataPacket();
             entityDataPacket.setRuntimeEntityId(entity.getGeyserId());
@@ -73,7 +81,7 @@ public class JavaPlayerPositionRotationTranslator extends PacketTranslator<Serve
             movePlayerPacket.setRuntimeEntityId(entity.getGeyserId());
             movePlayerPacket.setPosition(pos);
             movePlayerPacket.setRotation(Vector3f.from(packet.getPitch(), packet.getYaw(), 0));
-            movePlayerPacket.setMode(MovePlayerPacket.Mode.RESPAWN);
+            movePlayerPacket.setMode(MovePlayerPacket.Mode.RESPAWN); //TODO: PROBABLY RIGHT BUT STILL CHECK
 
             session.sendUpstreamPacket(movePlayerPacket);
             session.setSpawned(true);
