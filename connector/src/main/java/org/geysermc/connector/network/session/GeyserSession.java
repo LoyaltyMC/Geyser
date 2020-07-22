@@ -142,9 +142,11 @@ public class GeyserSession implements CommandSender {
 
     private boolean loggedIn;
     private boolean loggingIn;
+    private boolean usingSavedCredentials;
 
     @Setter
     private boolean spawned;
+    private boolean started;
     private boolean closed;
 
     @Setter
@@ -226,6 +228,8 @@ public class GeyserSession implements CommandSender {
 
         this.spawned = false;
         this.loggedIn = false;
+        this.usingSavedCredentials = false;
+        this.started = false;
 
         this.inventoryCache.getInventories().put(0, inventory);
 
@@ -244,7 +248,6 @@ public class GeyserSession implements CommandSender {
     }
 
     public void connect(RemoteServer remoteServer) {
-        startGame();
         this.remoteServer = remoteServer;
 
         if (EventManager.getInstance().triggerEvent(new GeyserLoginEvent(this)).isCancelled()) {
