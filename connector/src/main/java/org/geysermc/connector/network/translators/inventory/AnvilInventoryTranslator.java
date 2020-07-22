@@ -159,17 +159,6 @@ public class AnvilInventoryTranslator extends BlockInventoryTranslator {
     }
 
     @Override
-    public void translateActions(GeyserSession session, Inventory inventory, List<InventoryActionData> actions) {
-        // Ignore these packets
-        if (actions.stream().anyMatch(a -> a.getSource().getContainerId() == ContainerId.ANVIL_RESULT
-                || a.getSource().getContainerId() == ContainerId.ANVIL_MATERIAL)) {
-            return;
-        }
-
-        super.translateActions(session, inventory, actions);
-    }
-
-    @Override
     protected void processAction(Transaction transaction, ActionData cursor, ActionData from, ActionData to) {
         // If from is the output we add a rename packet
         if (isOutput(from.action)) {
