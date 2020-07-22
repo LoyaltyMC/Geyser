@@ -345,6 +345,8 @@ import org.geysermc.connector.network.translators.world.block.entity.ShulkerBoxB
 import org.geysermc.connector.network.translators.world.block.entity.SignBlockEntityTranslator;
 import org.geysermc.connector.network.translators.world.block.entity.SkullBlockEntityTranslator;
 import org.geysermc.connector.network.translators.world.block.entity.SpawnerBlockEntityTranslator;
+import org.geysermc.connector.network.translators.bedrock.BedrockEmoteTranslator;
+
 
 public class Edition extends GeyserEdition {
 

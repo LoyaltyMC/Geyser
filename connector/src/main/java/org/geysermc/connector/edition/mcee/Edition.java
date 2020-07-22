@@ -227,7 +227,7 @@ import org.geysermc.connector.network.translators.bedrock.BedrockBlockEntityData
 import org.geysermc.connector.network.translators.bedrock.BedrockBlockPickRequestPacketTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockCommandRequestTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockContainerCloseTranslator;
-//import org.geysermc.connector.network.translators.bedrock.BedrockEmoteTranslator;
+import org.geysermc.connector.network.translators.bedrock.BedrockEmoteTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockEntityEventTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockInteractTranslator;
 import org.geysermc.connector.network.translators.bedrock.BedrockInventoryTransactionTranslator;
