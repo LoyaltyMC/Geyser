@@ -227,4 +227,6 @@ config.yml
 logs/
 public-key.pem
 locales/
-cache/
+
+### VS Code ###
+.vscode
