@@ -26,8 +26,6 @@
 package org.geysermc.connector.network.translators.inventory;
 
 import com.github.steveice10.mc.protocol.data.game.entity.metadata.ItemStack;
-import com.github.steveice10.mc.protocol.data.message.MessageSerializer;
-import com.github.steveice10.mc.protocol.data.message.TextMessage;
 import com.github.steveice10.mc.protocol.packet.ingame.client.window.ClientRenameItemPacket;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.nukkitx.nbt.NbtMap;
@@ -42,7 +40,6 @@ import org.geysermc.connector.network.translators.inventory.action.Execute;
 import org.geysermc.connector.network.translators.inventory.updater.CursorInventoryUpdater;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AnvilInventoryTranslator extends BlockInventoryTranslator {
     public AnvilInventoryTranslator() {
@@ -86,53 +83,6 @@ public class AnvilInventoryTranslator extends BlockInventoryTranslator {
     }
 
     @Override
-    public void translateActions(GeyserSession session, Inventory inventory, List<InventoryActionData> actions) {
-        InventoryActionData anvilResult = null;
-        InventoryActionData anvilInput = null;
-        for (InventoryActionData action : actions) {
-            if (action.getSource().getContainerId() == ContainerId.ANVIL_MATERIAL) {
-                //useless packet
-                return;
-            } else if (action.getSource().getContainerId() == ContainerId.ANVIL_RESULT) {
-                anvilResult = action;
-            } else if (bedrockSlotToJava(action) == 0) {
-                anvilInput = action;
-            }
-        }
-        ItemData itemName = null;
-        if (anvilResult != null) {
-            itemName = anvilResult.getFromItem();
-        } else if (anvilInput != null) {
-            itemName = anvilInput.getToItem();
-        }
-        if (itemName != null) {
-            String rename;
-            NbtMap tag = itemName.getTag();
-            if (tag != null) {
-                String name = tag.getCompound("display").getString("Name");
-                Component component = GsonComponentSerializer.gson().deserialize(name);
-                rename = LegacyComponentSerializer.legacy().serialize(component);
-            } else {
-                rename = "";
-            }
-            ClientRenameItemPacket renameItemPacket = new ClientRenameItemPacket(rename);
-            session.sendDownstreamPacket(renameItemPacket);
-        }
-        if (anvilResult != null) {
-            //Strip unnecessary actions
-            List<InventoryActionData> strippedActions = actions.stream()
-                    .filter(action -> action.getSource().getContainerId() == ContainerId.ANVIL_RESULT
-                            || (action.getSource().getType() == InventorySource.Type.CONTAINER
-                            && !(action.getSource().getContainerId() == ContainerId.UI && action.getSlot() != 0)))
-                    .collect(Collectors.toList());
-            super.translateActions(session, inventory, strippedActions);
-            return;
-        }
-
-        super.translateActions(session, inventory, actions);
-    }
-
-    @Override
     public void updateSlot(GeyserSession session, Inventory inventory, int slot) {
         if (slot == 0) {
             ItemStack item = inventory.getItem(slot);
@@ -144,7 +94,7 @@ public class AnvilInventoryTranslator extends BlockInventoryTranslator {
                     if (displayTag != null && displayTag.contains("Name")) {
                         String itemName = displayTag.get("Name").getValue().toString();
                         Component component = GsonComponentSerializer.gson().deserialize(itemName);
-                        rename = LegacyComponentSerializer.legacy().serialize(component);
+                        rename = LegacyComponentSerializer.legacySection().serialize(component);
                     } else {
                         rename = "";
                     }
@@ -165,7 +115,14 @@ public class AnvilInventoryTranslator extends BlockInventoryTranslator {
             transaction.add(new Execute(() -> {
                 ItemData item = from.action.getFromItem();
                 NbtMap tag = item.getTag();
-                String rename = tag != null ? tag.getCompound("display").getString("Name") : "";
+                String rename;
+                if (tag != null) {
+                    String name = tag.getCompound("display").getString("Name");
+                    Component component = GsonComponentSerializer.gson().deserialize(name);
+                    rename = LegacyComponentSerializer.legacySection().serialize(component);
+                } else {
+                    rename = "";
+                }
                 ClientRenameItemPacket renameItemPacket = new ClientRenameItemPacket(rename);
                 transaction.getSession().sendDownstreamPacket(renameItemPacket);
             }));
