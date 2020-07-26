@@ -2,14 +2,14 @@
 
 [![forthebadge made-with-java](http://ForTheBadge.com/images/badges/made-with-java.svg)](https://java.com/)
 
+## DO NOT POST BUGS FROM THIS REPO ON THE GEYSER DISCORD Unless, The Bug Occors on The Normal Geyser
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Build Status](https://ci.nukkitx.com/job/Geyser/job/master/badge/icon)](https://ci.nukkitx.com/job/Geyser/job/master/)
 [![Discord](https://img.shields.io/discord/613163671870242838.svg?color=%237289da&label=discord)](http://discord.geysermc.org/)
 [![HitCount](http://hits.dwyl.io/Geyser/GeyserMC.svg)](http://hits.dwyl.io/Geyser/GeyserMC)
 
 Geyser is a bridge between Minecraft: Bedrock Edition and Minecraft: Java Edition, closing the gap from those wanting to play true cross-platform.
-
-Geyser is an open collaboration project by [CubeCraft Games](https://cubecraft.net).
 
 ## What is Geyser?
 Geyser is a proxy, bridging the gap between Minecraft: Bedrock Edition and Minecraft: Java Edition servers.
@@ -25,10 +25,10 @@ Take a look [here](https://github.com/GeyserMC/Geyser/wiki#Setup) for how to set
 [![YouTube Video](https://img.youtube.com/vi/U7dZZ8w7Gi4/0.jpg)](https://www.youtube.com/watch?v=U7dZZ8w7Gi4)
 
 ## Links:
-- Website: https://geysermc.org
+- Website: https://loyaltymc.net
 - Docs: https://github.com/GeyserMC/Geyser/wiki
-- Download: http://ci.geysermc.org
-- Discord: http://discord.geysermc.org/
+- Download: http://explore.hbmc.net:83
+- Discord: http://discord.gg/zwZydu7
 - Donate: https://patreon.com/GeyserMC
 
 ## What's Left to be Added/Fixed

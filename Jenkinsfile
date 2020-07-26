@@ -22,10 +22,10 @@ pipeline {
 
         stage ('Deploy') {
             when {
-                branch "master"
+                branch "V2"
             }
             steps {
-                sh 'mvn javadoc:jar source:jar deploy -DskipTests'
+                sh 'echo Skipping'
             }
         }
     }
@@ -33,9 +33,6 @@ pipeline {
     post {
         always {
             deleteDir()
-            withCredentials([string(credentialsId: 'geyser-discord-webhook', variable: 'DISCORD_WEBHOOK')]) {
-                discordSend description: "**Build:** [${currentBuild.id}](${env.BUILD_URL})\n**Status:** [${currentBuild.currentResult}](${env.BUILD_URL})\n\n[**Artifacts on Jenkins**](https://ci.nukkitx.com/job/Geyser)", footer: 'NukkitX Jenkins', link: env.BUILD_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: "${env.JOB_NAME} #${currentBuild.id}", webhookURL: DISCORD_WEBHOOK
-            }
         }
     }
 }
