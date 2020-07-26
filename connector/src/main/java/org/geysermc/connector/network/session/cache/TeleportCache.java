@@ -40,6 +40,15 @@ public class TeleportCache {
     private double x, y, z;
     private int teleportConfirmId;
 
+    /**
+     * How many move packets the teleport can be unconfirmed for before it gets resent to the client
+     */
+     private static final int RESEND_THRESHOLD = 5;
+
+    private final double x, y, z;
+    private final double pitch, yaw;
+    private final int teleportConfirmId;
+
     public boolean canConfirm(Vector3d position) {
         return (Math.abs(this.x - position.getX()) < ERROR &&
                 Math.abs(this.y - position.getY()) < ERROR_Y &&

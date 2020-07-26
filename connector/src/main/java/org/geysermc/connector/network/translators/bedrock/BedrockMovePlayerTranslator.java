@@ -59,13 +59,45 @@ public class BedrockMovePlayerTranslator extends PacketTranslator<MovePlayerPack
             return;
         }
 
+        // If only the pitch and yaw changed
+        // This isn't needed, but it makes the packets closer to vanilla
+        // It also means you can't "lag back" while only looking, in theory
+        if (entity.getPosition().equals(packet.getPosition())) {
+            // System.out.println("Look only!");
+            ClientPlayerRotationPacket playerRotationPacket = new ClientPlayerRotationPacket(
+                    packet.isOnGround(), packet.getRotation().getY(), packet.getRotation().getX()
+            );
+
+            // head yaw, pitch, head yaw
+            Vector3f rotation = Vector3f.from(packet.getRotation().getY(), packet.getRotation().getX(), packet.getRotation().getY());
+            entity.setPosition(packet.getPosition().sub(0, EntityType.PLAYER.getOffset(), 0));
+            entity.setRotation(rotation);
+            entity.setOnGround(packet.isOnGround());
+
+            session.sendDownstreamPacket(playerRotationPacket);
+            return;
+        }
+
         // We need to parse the float as a string since casting a float to a double causes us to
         // lose precision and thus, causes players to get stuck when walking near walls
-        double javaY = packet.getPosition().getY() - EntityType.PLAYER.getOffset();
-        if (packet.isOnGround()) javaY = Math.ceil(javaY * 2) / 2;
+        double javaY = Double.parseDouble(Float.toString(packet.getPosition().getY())) - EntityType.PLAYER.getOffset();
+
+        // System.out.println("Y pos: " + javaY);
+
+        if (javaY < -39 && javaY <= -40) {
+            // TODO: TP player below void
+            MovePlayerPacket movePlayerPacket = new MovePlayerPacket();
+            movePlayerPacket.setRuntimeEntityId(entity.getGeyserId());
+            movePlayerPacket.setPosition(packet.getPosition().sub(0, 1.5, 0));
+            movePlayerPacket.setRotation(packet.getRotation());
+            movePlayerPacket.setMode(MovePlayerPacket.Mode.NORMAL);
+            session.sendUpstreamPacket(movePlayerPacket);
+
+        }
 
         Vector3d position = Vector3d.from(Double.parseDouble(Float.toString(packet.getPosition().getX())), javaY,
                 Double.parseDouble(Float.toString(packet.getPosition().getZ())));
+        System.out.println("Pre-pos!!!: " + position);
 
         if(!session.confirmTeleport(position)){
             return;
@@ -77,8 +109,13 @@ public class BedrockMovePlayerTranslator extends PacketTranslator<MovePlayerPack
             return;
         }
 
+        System.out.println("Post-pos: " + position);
         ClientPlayerPositionRotationPacket playerPositionRotationPacket = new ClientPlayerPositionRotationPacket(
-                packet.isOnGround(), position.getX(), position.getY(), position.getZ(), packet.getRotation().getY(), packet.getRotation().getX()
+                packet.isOnGround(), position.getX(),
+                Math.round(position.getY() * 100.0D) / 100.0d,
+                position.getZ(),
+                packet.getRotation().getY(),
+                packet.getRotation().getX()
         );
 
         // head yaw, pitch, head yaw

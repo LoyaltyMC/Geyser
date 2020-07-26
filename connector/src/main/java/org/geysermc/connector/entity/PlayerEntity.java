@@ -303,6 +303,71 @@ public class PlayerEntity extends LivingEntity {
         }
     }
 
+    public void updateBoundingBox(Vector3f position) {
+        updateBoundingBox(Vector3d.from(position.getX(), position.getY(), position.getZ()));
+    }
+
+    public void updateBoundingBox(Vector3d position) {
+        if (boundingBox == null) {
+            System.out.println("BBnull");
+            boundingBox = new BoundingBox(position.getX(), position.getY(), position.getZ(), 0.60001, 1.8, 0.60001);
+        } else {
+            // TODO: Make bounding box smaller when sneaking
+            boundingBox.setMiddleX(position.getX());
+            boundingBox.setMiddleY(position.getY() + 0.9); // (EntityType.PLAYER.getOffset() / 2));
+            // System.out.println("Offset: " + (EntityType.PLAYER.getOffset() / 2));
+            boundingBox.setMiddleZ(position.getZ());
+        }
+    }
+
+    public static final double COLLISION_TOLERANCE = 0.05;
+
+    public ArrayList<Vector3i> getCollidableBlocks(Vector3d position) {
+        ArrayList<Vector3i> blocks = new ArrayList<Vector3i>();
+
+        // Loop through all blocks that could collide with the player
+        int minCollisionX = (int) Math.floor(position.getX() - ((boundingBox.getSizeX() / 2) + COLLISION_TOLERANCE));
+        int maxCollisionX = (int) Math.floor(position.getX() + (boundingBox.getSizeX() / 2) + COLLISION_TOLERANCE);
+
+        // Y extends 0.5 blocks down because of fence hitboxes
+        int minCollisionY = (int) Math.floor(position.getY() - 0.5);
+
+        // TODO: change comment
+        // Hitbox height is currently set to 0.5 to improve performance, as only blocks below the player need checking
+        // Any lower seems to cause issues
+        int maxCollisionY = (int) Math.floor(position.getY() + boundingBox.getSizeY());
+
+        int minCollisionZ = (int) Math.floor(position.getZ() - ((boundingBox.getSizeZ() / 2) + COLLISION_TOLERANCE));
+        int maxCollisionZ = (int) Math.floor(position.getZ() + (boundingBox.getSizeZ() / 2) + COLLISION_TOLERANCE);
+
+        // BlockCollision blockCollision;
+
+        for (int y = minCollisionY; y < maxCollisionY + 1; y++) {
+            for (int x = minCollisionX; x < maxCollisionX + 1; x++) {
+                for (int z = minCollisionZ; z < maxCollisionZ + 1; z++) {
+                    blocks.add(Vector3i.from(x, y, z));
+                }
+            }
+        }
+
+        return blocks;
+    }
+
+    public ArrayList<BlockCollision> getPossibleCollision(Vector3d position, GeyserSession session) {
+        ArrayList<BlockCollision> possibleCollision = new ArrayList<BlockCollision>();
+        ArrayList<Vector3i> collidableBlocks = getCollidableBlocks(position);
+
+        Iterator<Vector3i> i = collidableBlocks.iterator();
+        while (i.hasNext()) {
+            Vector3i blockPos = i.next();
+            BlockCollision blockCollision = CollisionTranslator.getCollisionAt(
+                    blockPos.getX(), blockPos.getY(), blockPos.getZ(), session
+            );
+            possibleCollision.add(blockCollision);
+        }
+        return possibleCollision;
+    }
+
     @Override
     public void updateBedrockAttributes(GeyserSession session) { // TODO: Don't use duplicated code
         if (!valid) return;
