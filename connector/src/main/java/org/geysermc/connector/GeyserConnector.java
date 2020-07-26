@@ -53,6 +53,7 @@ import org.geysermc.connector.network.translators.sound.SoundRegistry;
 import org.geysermc.connector.network.translators.world.WorldManager;
 import org.geysermc.connector.network.translators.world.block.BlockTranslator;
 import org.geysermc.connector.network.translators.world.block.entity.BlockEntityTranslator;
+import org.geysermc.connector.network.translators.world.collision.CollisionTranslator;
 import org.geysermc.connector.utils.DimensionUtils;
 import org.geysermc.connector.utils.DockerCheck;
 import org.geysermc.connector.utils.LanguageUtils;
@@ -132,6 +133,7 @@ public class GeyserConnector {
         EntityIdentifierRegistry.init();
         ItemRegistry.init();
         ItemTranslator.init();
+        CollisionTranslator.init();
         LocaleUtils.init();
         PotionMixRegistry.init();
         SoundRegistry.init();
