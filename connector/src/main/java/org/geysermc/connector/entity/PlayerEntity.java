@@ -52,6 +52,8 @@ import org.geysermc.connector.scoreboard.Team;
 import org.geysermc.connector.utils.AttributeUtils;
 import org.geysermc.connector.utils.BoundingBox;
 import org.geysermc.connector.utils.MessageUtils;
+import org.geysermc.connector.network.session.cache.EntityEffectCache;
+import org.geysermc.connector.utils.SkinProvider;
 import org.geysermc.connector.utils.SkinUtils;
 
 import java.util.*;
@@ -65,6 +67,8 @@ public class PlayerEntity extends LivingEntity {
     private long lastSkinUpdate = -1;
     private boolean playerList = true;
     private final EntityEffectCache effectCache;
+
+    private SkinProvider.SkinGeometry geometry;
 
     @Setter
     private boolean sneaking;
@@ -126,6 +130,26 @@ public class PlayerEntity extends LivingEntity {
 
         updateEquipment(session);
         updateBedrockAttributes(session);
+    }
+
+    /**
+     * Add player to playerlist
+     */
+    public void addPlayerList(GeyserSession session) {
+        PlayerListPacket addPlayerListPacket = new PlayerListPacket();
+        addPlayerListPacket.setAction(PlayerListPacket.Action.ADD);
+        addPlayerListPacket.getEntries().add(SkinUtils.buildCachedEntry(this));
+        session.sendUpstreamPacket(addPlayerListPacket);
+    }
+
+    /**
+     * Remove player from playerlist
+     */
+    public void removePlayerList(GeyserSession session) {
+        PlayerListPacket removePlayerListPacket = new PlayerListPacket();
+        removePlayerListPacket.setAction(PlayerListPacket.Action.REMOVE);
+        removePlayerListPacket.getEntries().add(SkinUtils.buildCachedEntry(this));
+        session.sendUpstreamPacket(removePlayerListPacket);
     }
 
     public void sendPlayer(GeyserSession session) {

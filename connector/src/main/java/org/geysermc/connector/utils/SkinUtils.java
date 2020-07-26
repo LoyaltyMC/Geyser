@@ -47,18 +47,21 @@ import java.util.function.Consumer;
 
 public class SkinUtils {
 
-    public static PlayerListPacket.Entry buildCachedEntry(GameProfile profile, long geyserId) {
-        GameProfileData data = GameProfileData.from(profile);
+    public static PlayerListPacket.Entry buildCachedEntry(PlayerEntity playerEntity) {
+        GameProfileData data = GameProfileData.from(playerEntity.getProfile());
         SkinProvider.Cape cape = SkinProvider.getCachedCape(data.getCapeUrl());
 
-        SkinProvider.SkinGeometry geometry = SkinProvider.SkinGeometry.getLegacy(data.isAlex());
+        SkinProvider.SkinGeometry geometry = playerEntity.getGeometry();
+        if (geometry == null) {
+            geometry = SkinProvider.SkinGeometry.getLegacy(data.isAlex());
+        }
 
         return buildEntryManually(
-                profile.getId(),
-                profile.getName(),
-                geyserId,
-                profile.getIdAsString(),
-                SkinProvider.getCachedSkin(profile.getId()).getSkinData(),
+                playerEntity.getProfile().getId(),
+                playerEntity.getProfile().getName(),
+                playerEntity.getGeyserId(),
+                playerEntity.getProfile().getIdAsString(),
+                SkinProvider.getCachedSkin(playerEntity.getProfile().getId()).getSkinData(),
                 cape.getCapeId(),
                 cape.getCapeData(),
                 geometry.getGeometryName(),
@@ -120,7 +123,7 @@ public class SkinUtils {
             try {
                 GameProfile.Property skinProperty = profile.getProperty("textures");
 
-                JsonNode skinObject = new ObjectMapper().readTree(new String(Base64.getDecoder().decode(skinProperty.getValue()), StandardCharsets.UTF_8));
+                JsonNode skinObject = GeyserConnector.JSON_MAPPER.readTree(new String(Base64.getDecoder().decode(skinProperty.getValue()), StandardCharsets.UTF_8));
                 JsonNode textures = skinObject.get("textures");
 
                 JsonNode skinTexture = textures.get("SKIN");
@@ -156,23 +159,30 @@ public class SkinUtils {
                             SkinProvider.Skin skin = skinAndCape.getSkin();
                             SkinProvider.Cape cape = skinAndCape.getCape();
 
-                            if (cape.isFailed()) {
-                                cape = SkinProvider.getOrDefault(SkinProvider.requestBedrockCape(
-                                        entity.getUuid(), false
-                                ), SkinProvider.EMPTY_CAPE, 3);
+                            if (!entity.getUsername().isEmpty()) {
+                                if (cape.isFailed()) {
+                                    cape = SkinProvider.getOrDefault(SkinProvider.requestBedrockCape(
+                                            entity.getUuid(), false
+                                    ), SkinProvider.EMPTY_CAPE, 3);
+                                }
+
+                                if (cape.isFailed() && SkinProvider.ALLOW_THIRD_PARTY_CAPES) {
+                                    cape = SkinProvider.getOrDefault(SkinProvider.requestUnofficialCape(
+                                            cape, entity.getUuid(),
+                                            entity.getUsername(), false
+                                    ), SkinProvider.EMPTY_CAPE, SkinProvider.CapeProvider.VALUES.length * 3);
+                                }
                             }
 
-                            if (cape.isFailed() && SkinProvider.ALLOW_THIRD_PARTY_CAPES) {
-                                cape = SkinProvider.getOrDefault(SkinProvider.requestUnofficialCape(
-                                        cape, entity.getUuid(),
-                                        entity.getUsername(), false
-                                ), SkinProvider.EMPTY_CAPE, SkinProvider.CapeProvider.VALUES.length * 3);
+                            SkinProvider.SkinGeometry geometry = entity.getGeometry();
+                            if (geometry == null) {
+                                geometry = SkinProvider.SkinGeometry.getLegacy(data.isAlex());
                             }
 
-                            SkinProvider.SkinGeometry geometry = SkinProvider.SkinGeometry.getLegacy(data.isAlex());
                             geometry = SkinProvider.getOrDefault(SkinProvider.requestBedrockGeometry(
                                     geometry, entity.getUuid(), false
                             ), geometry, 3);
+
 
                             // Not a bedrock player check for ears
                             if (geometry.isFailed() && SkinProvider.ALLOW_THIRD_PARTY_EARS) {
