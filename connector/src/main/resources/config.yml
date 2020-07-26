@@ -90,6 +90,9 @@ show-cooldown: true
 # Geyser has direct access to the server itself.
 cache-chunks: false
 
+# Specify how many days images will be cached to disk. A value of 0 is disabled.
+cache-images: 0
+
 # Allows custom skulls to be displayed.
 allow-custom-skulls: true
 

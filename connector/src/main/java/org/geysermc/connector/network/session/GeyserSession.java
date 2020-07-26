@@ -285,15 +285,15 @@ public class GeyserSession implements CommandSender {
         upstream.sendPacket(creativePacket);
     }
 
-    public void fetchOurSkin(PlayerListPacket.Entry entry) {
-        PlayerSkinPacket playerSkinPacket = new PlayerSkinPacket();
-        playerSkinPacket.setUuid(authData.getUUID());
-        playerSkinPacket.setSkin(entry.getSkin());
-        playerSkinPacket.setOldSkinName("OldName");
-        playerSkinPacket.setNewSkinName("NewName");
-        playerSkinPacket.setTrustedSkin(true);
-        upstream.sendPacket(playerSkinPacket);
-        getConnector().getLogger().debug("Sending skin for " + playerEntity.getUsername() + " " + authData.getUUID());
+    public void login() {
+        if (connector.getAuthType() != AuthType.ONLINE) {
+            if (connector.getAuthType() == AuthType.OFFLINE) {
+                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.offline"));
+            } else {
+                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.floodgate"));
+            }
+            authenticate(authData.getName());
+        }
     }
 
     public void authenticate(String username) {
