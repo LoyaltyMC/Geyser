@@ -101,7 +101,7 @@ public class BedrockMovePlayerTranslator extends PacketTranslator<MovePlayerPack
 
         Vector3d position = Vector3d.from(Double.parseDouble(Float.toString(packet.getPosition().getX())), javaY,
                 Double.parseDouble(Float.toString(packet.getPosition().getZ())));
-        System.out.println("Pre-pos!!!: " + position);
+    //    System.out.println("Pre-pos!!!: " + position);
 
         if (!session.confirmTeleport(position)){
             return;
@@ -156,7 +156,7 @@ public class BedrockMovePlayerTranslator extends PacketTranslator<MovePlayerPack
             return;
         }
 
-        System.out.println("Post-pos: " + position);
+  //      System.out.println("Post-pos: " + position);
         ClientPlayerPositionRotationPacket playerPositionRotationPacket = new ClientPlayerPositionRotationPacket(
                 packet.isOnGround(), position.getX(),
                 Math.round(position.getY() * 10000.0D) / 10000.0d,

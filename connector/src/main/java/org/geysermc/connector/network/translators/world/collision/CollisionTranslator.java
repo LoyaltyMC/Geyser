@@ -35,7 +35,7 @@ import org.geysermc.connector.network.translators.world.collision.translators.Em
 import org.geysermc.connector.network.translators.world.collision.translators.SolidCollision;
 import org.reflections.Reflections;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.InvocationTargetException; //system
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -66,7 +66,7 @@ public class CollisionTranslator {
             annotationMap.put(clazz, clazz.getAnnotation(CollisionRemapper.class));
         }
 
-        System.out.println(collisionTypes);
+      //  System.out.println(collisionTypes);
 
         BiMap<String, Integer> javaIdBlockMap = BlockTranslator.getJavaIdBlockMap();
         // Map of classes that don't change based on parameters that have already been created

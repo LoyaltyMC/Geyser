@@ -52,7 +52,7 @@ import org.geysermc.connector.scoreboard.Team;
 import org.geysermc.connector.utils.AttributeUtils;
 import org.geysermc.connector.utils.BoundingBox;
 import org.geysermc.connector.utils.MessageUtils;
-import org.geysermc.connector.network.session.cache.EntityEffectCache;
+import org.geysermc.connector.network.session.cache.EntityEffectCache; //system
 import org.geysermc.connector.utils.SkinProvider;
 import org.geysermc.connector.utils.SkinUtils;
 
@@ -86,7 +86,7 @@ public class PlayerEntity extends LivingEntity {
     public PlayerEntity(GameProfile gameProfile, long entityId, long geyserId, Vector3f position, Vector3f motion, Vector3f rotation) {
         super(entityId, geyserId, EntityType.PLAYER, position, motion, rotation);
 
-        System.out.println(boundingBox);
+      //System.out.println(boundingBox);
 
         profile = gameProfile;
         uuid = gameProfile.getId();
@@ -346,7 +346,7 @@ public class PlayerEntity extends LivingEntity {
 
     public void updateBoundingBox(Vector3d position) {
         if (boundingBox == null) {
-            System.out.println("BBnull");
+            //em.out.println("BBnull");
             boundingBox = new BoundingBox(position.getX(), position.getY(), position.getZ(), 0.60001, 1.8, 0.60001);
         } else {
             // TODO: Make bounding box smaller when sneaking

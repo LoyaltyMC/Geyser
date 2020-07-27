@@ -34,7 +34,7 @@ import org.geysermc.connector.utils.BoundingBox;
 public class SolidCollision extends BlockCollision {
     public SolidCollision(String params) {
         super();
-        System.out.println("Instance (solid)!");
+      //  System.out.println("Instance (solid)!");
         boundingBoxes = new BoundingBox[]{
                 new BoundingBox(0.5, 0.5, 0.5, 1, 1, 1)
         };
