@@ -66,11 +66,16 @@ public class CollisionTranslator {
             annotationMap.put(clazz, clazz.getAnnotation(CollisionRemapper.class));
         }
 
-            BiMap<String, Integer> javaIdBlockMap = BlockTranslator.getJavaIdBlockMap();
+      //  System.out.println(collisionTypes);
 
-            for (Map.Entry<String, Integer> entry : javaIdBlockMap.entrySet()) {
-                BlockCollision newCollision = instantiateCollision(entry.getKey(), collisionTypes, regexMap, paramRegexMap);
-                collisionMap.put(entry.getValue(), newCollision);
+        BiMap<String, Integer> javaIdBlockMap = BlockTranslator.getJavaIdBlockMap();
+        // Map of classes that don't change based on parameters that have already been created
+        // BiMap<Class, BlockCollision> instantiatedCollision = HashBiMap.create();
+        Map<Class, BlockCollision> instantiatedCollision = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : javaIdBlockMap.entrySet()) {
+            BlockCollision newCollision = instantiateCollision(entry.getKey(), collisionTypes, annotationMap, instantiatedCollision);
+            if (newCollision != null) {
+                instantiatedCollision.put(newCollision.getClass(), newCollision);
             }
             collisionMap.put(entry.getValue(), newCollision);
         }
@@ -139,9 +144,11 @@ public class CollisionTranslator {
         }
     }
 
-    public static BlockCollision getCollision(Integer block, int x, int y, int z) {
-        BlockCollision collision = collisionMap.get(block);
-        collision.setPosition(x, y, z);
+    public static BlockCollision getCollision(Integer blockID, int x, int y, int z) {
+        BlockCollision collision = collisionMap.get(blockID);
+        if (collision != null) {
+            collision.setPosition(x, y, z);
+        }
         return collision;
     }
     public static BlockCollision getCollisionAt(int x, int y, int z, GeyserSession session) {
