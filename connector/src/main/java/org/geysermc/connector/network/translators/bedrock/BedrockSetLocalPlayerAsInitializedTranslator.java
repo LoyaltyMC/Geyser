@@ -44,14 +44,14 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
             if (!session.getUpstream().isInitialized()) {
                 session.getUpstream().setInitialized(true);
 
-                PlayerListPacket playerListPacket = new PlayerListPacket();
-                playerListPacket.setAction(PlayerListPacket.Action.ADD);
+  //              PlayerListPacket playerListPacket = new PlayerListPacket();
+  //              playerListPacket.setAction(PlayerListPacket.Action.ADD);
                 for (PlayerEntity entity : session.getEntityCache().getEntitiesByType(PlayerEntity.class)) {
                     if (!entity.isValid()) {
                         // async skin loading
                         SkinUtils.requestAndHandleSkinAndCape(entity, session, skinAndCape -> entity.sendPlayer(session));
                     }
-
+/*
                      if (entity.isPlayerList()) {
                         PlayerListPacket.Entry entry = SkinUtils.buildCachedEntry(playerEntity);
                         if (entity == session.getPlayerEntity()) {
@@ -66,7 +66,7 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
                             entry = copy;
                         }
                         playerListPacket.getEntries().add(entry);
-                    }
+                    }*/
                 }
 
                 // Send Skulls
