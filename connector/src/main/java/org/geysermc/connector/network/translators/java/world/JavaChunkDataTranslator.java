@@ -32,6 +32,7 @@ import com.nukkitx.nbt.NbtMap;
 import com.nukkitx.nbt.NbtUtils;
 import com.nukkitx.network.VarInts;
 import com.nukkitx.protocol.bedrock.packet.LevelChunkPacket;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
@@ -41,18 +42,11 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.BiomeTranslator;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
-import org.geysermc.connector.network.translators.world.chunk.ChunkSection;
 import org.geysermc.connector.utils.ChunkUtils;
+import org.geysermc.connector.network.translators.world.chunk.ChunkSection;
 
 @Translator(packet = ServerChunkDataPacket.class)
 public class JavaChunkDataTranslator extends PacketTranslator<ServerChunkDataPacket> {
-
-    // Used for determining if we should process non-full chunks
-    private static final boolean CACHE_CHUNKS;
-
-    static {
-        CACHE_CHUNKS = GeyserConnector.getInstance().getConfig().isCacheChunks();
-    }
 
     @Override
     public void translate(ServerChunkDataPacket packet, GeyserSession session) {
@@ -60,18 +54,12 @@ public class JavaChunkDataTranslator extends PacketTranslator<ServerChunkDataPac
             ChunkUtils.updateChunkPosition(session, session.getPlayerEntity().getPosition().toInt());
         }
 
-        if (packet.getColumn().getBiomeData() == null && !CACHE_CHUNKS) {
-            // Non-full chunk without chunk caching
-            session.getConnector().getLogger().debug("Not sending non-full chunk because chunk caching is off.");
+        if (packet.getColumn().getBiomeData() == null) //Non-full chunk
             return;
-        }
-
-        // Non-full chunks don't have all the chunk data, and Bedrock won't accept that
-        final boolean isNonFullChunk = (packet.getColumn().getBiomeData() == null);
 
         GeyserConnector.getInstance().getGeneralThreadPool().execute(() -> {
             try {
-                ChunkUtils.ChunkData chunkData = ChunkUtils.translateToBedrock(session, packet.getColumn(), isNonFullChunk);
+                ChunkUtils.ChunkData chunkData = ChunkUtils.translateToBedrock(packet.getColumn(), session);
                 ByteBuf byteBuf = Unpooled.buffer(32);
                 ChunkSection[] sections = chunkData.sections;
 
@@ -86,12 +74,7 @@ public class JavaChunkDataTranslator extends PacketTranslator<ServerChunkDataPac
                     section.writeToNetwork(byteBuf);
                 }
 
-                byte[] bedrockBiome;
-                if (packet.getColumn().getBiomeData() == null) {
-                    bedrockBiome = BiomeTranslator.toBedrockBiome(session.getConnector().getWorldManager().getBiomeDataAt(session, packet.getColumn().getX(), packet.getColumn().getZ()));
-                } else {
-                    bedrockBiome = BiomeTranslator.toBedrockBiome(packet.getColumn().getBiomeData());
-                }
+                byte[] bedrockBiome = BiomeTranslator.toBedrockBiome(packet.getColumn().getBiomeData());
 
                 byteBuf.writeBytes(bedrockBiome); // Biomes - 256 bytes
                 byteBuf.writeByte(0); // Border blocks - Edu edition only
