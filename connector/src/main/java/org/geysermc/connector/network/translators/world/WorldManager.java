@@ -71,4 +71,6 @@ public abstract class WorldManager {
      * @return the block state at the specified location
      */
     public abstract int getBlockAt(GeyserSession session, int x, int y, int z);
+
+    public abstract int[] getBiomeDataAt(GeyserSession session, int x, int z);
 }
