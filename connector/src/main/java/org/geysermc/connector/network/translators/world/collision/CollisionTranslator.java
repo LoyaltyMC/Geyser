@@ -26,7 +26,6 @@
 
 package org.geysermc.connector.network.translators.world.collision;
 
-import com.github.steveice10.mc.protocol.data.game.world.block.BlockState;
 import com.google.common.collect.BiMap;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.network.translators.world.collision.translators.*;
@@ -38,7 +37,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class CollisionTranslator {
-    private static Map<BlockState, BlockCollision> collisionMap = new HashMap<>();
+    private static Map<Integer, BlockCollision> collisionMap = new HashMap<>();
 
     public static void init() {
         // If chunk caching is off then don't initialize
@@ -62,9 +61,9 @@ public class CollisionTranslator {
             regexMap.put(clazz, Pattern.compile(regex));
             paramRegexMap.put(clazz, Pattern.compile(paramRegex));
 
-            BiMap<String, BlockState> javaIdBlockMap = BlockTranslator.getJavaIdBlockMap();
+            BiMap<String, Integer> javaIdBlockMap = BlockTranslator.getJavaIdBlockMap();
 
-            for (Map.Entry<String, BlockState> entry : javaIdBlockMap.entrySet()) {
+            for (Map.Entry<String, Integer> entry : javaIdBlockMap.entrySet()) {
                 BlockCollision newCollision = instantiateCollision(entry.getKey(), collisionTypes, regexMap, paramRegexMap);
                 collisionMap.put(entry.getValue(), newCollision);
             }
@@ -101,7 +100,7 @@ public class CollisionTranslator {
         return new SolidCollision(params);
     }
 
-    public static BlockCollision getCollision(BlockState block, int x, int y, int z) {
+    public static BlockCollision getCollision(Integer block, int x, int y, int z) {
         BlockCollision collision = collisionMap.get(block);
         collision.setPosition(x, y, z);
         return collision;
