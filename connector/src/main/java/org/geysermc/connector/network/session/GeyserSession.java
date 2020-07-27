@@ -30,6 +30,7 @@ import com.github.steveice10.mc.auth.exception.request.InvalidCredentialsExcepti
 import com.github.steveice10.mc.auth.exception.request.RequestException;
 import com.github.steveice10.mc.protocol.MinecraftProtocol;
 import com.github.steveice10.mc.protocol.data.SubProtocol;
+import com.github.steveice10.mc.protocol.data.game.entity.metadata.Position;
 import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
 import com.github.steveice10.mc.protocol.data.game.window.VillagerTrade;
 import com.github.steveice10.mc.protocol.data.message.MessageSerializer;
@@ -57,7 +58,6 @@ import lombok.Setter;
 import org.geysermc.common.window.FormWindow;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.command.CommandSender;
-import org.geysermc.connector.configuration.GeyserConfiguration;
 import org.geysermc.connector.common.AuthType;
 import org.geysermc.connector.entity.Entity;
 import org.geysermc.connector.entity.PlayerEntity;
@@ -80,9 +80,13 @@ import java.net.InetSocketAddress;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
@@ -105,8 +109,8 @@ public class GeyserSession implements CommandSender {
     private InventoryCache inventoryCache;
     private ScoreboardCache scoreboardCache;
     private WindowCache windowCache;
-    @Setter
-    private TeleportCache teleportCache;
+    private Map<Position, PlayerEntity> skullCache = new ConcurrentHashMap<>();
+    private final HashMap<Integer, TeleportCache> teleportMap = new HashMap<Integer, TeleportCache>();
 
     @Getter
     private final Long2ObjectMap<ClientboundMapItemDataPacket> storedMaps = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
@@ -125,11 +129,9 @@ public class GeyserSession implements CommandSender {
 
     private boolean loggedIn;
     private boolean loggingIn;
-    private boolean usingSavedCredentials;
 
     @Setter
     private boolean spawned;
-    private boolean started;
     private boolean closed;
 
     @Setter
@@ -211,8 +213,6 @@ public class GeyserSession implements CommandSender {
 
         this.spawned = false;
         this.loggedIn = false;
-        this.usingSavedCredentials = false;
-        this.started = false;
 
         this.inventoryCache.getInventories().put(0, inventory);
 
@@ -225,48 +225,10 @@ public class GeyserSession implements CommandSender {
     }
 
     public void connect(RemoteServer remoteServer) {
+        startGame();
         this.remoteServer = remoteServer;
 
-        if (connector.getAuthType() != AuthType.ONLINE) {
-            if (connector.getAuthType() == AuthType.OFFLINE) {
-                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.offline"));
-            } else {
-                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.floodgate"));
-            }
-            authenticate(authData.getName());
-        } else if (connector.getConfig().getUserAuths() != null && connector.getConfig().getUserAuths().containsKey(authData.getName())) {
-            connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.stored_credentials", getAuthData().getName()));
-            usingSavedCredentials = true;
-            GeyserConfiguration.IUserAuthenticationInfo info = connector.getConfig().getUserAuths().get(authData.getName());
-            authenticate(info.getEmail(), info.getPassword());
-        } else { // Show login form
-            playerEntity.setDimension(DimensionUtils.THE_END);
-            initialize();
-            ChunkUtils.sendEmptyChunks(this, playerEntity.getPosition().toInt(), 0, false);
-            start();
-        }
-    }
-
-    public void start() {
-        if (!started) {
-            started = true;
-            PlayStatusPacket playStatusPacket = new PlayStatusPacket();
-            playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
-            upstream.sendPacket(playStatusPacket);
-
-            UpdateAttributesPacket attributesPacket = new UpdateAttributesPacket();
-            attributesPacket.setRuntimeEntityId(getPlayerEntity().getGeyserId());
-            List<AttributeData> attributes = new ArrayList<>();
-            // Default move speed
-            // Bedrock clients move very fast by default until they get an attribute packet correcting the speed
-            attributes.add(new AttributeData("minecraft:movement", 0.0f, 1024f, 0.1f, 0.1f));
-            attributesPacket.setAttributes(attributes);
-            upstream.sendPacket(attributesPacket);
-        }
-    }
-
-    public void initialize() {
-        startGame();
+        ChunkUtils.sendEmptyChunks(this, playerEntity.getPosition().toInt(), 0, false);
 
         BiomeDefinitionListPacket biomeDefinitionListPacket = new BiomeDefinitionListPacket();
         biomeDefinitionListPacket.setDefinitions(BiomeTranslator.BIOMES);
@@ -277,10 +239,21 @@ public class GeyserSession implements CommandSender {
         upstream.sendPacket(entityPacket);
 
         CreativeContentPacket creativePacket = new CreativeContentPacket();
-        for (int i = 0; i < ItemRegistry.CREATIVE_ITEMS.length; i++) {
-            creativePacket.getEntries().put(i + 1, ItemRegistry.CREATIVE_ITEMS[i]);
-        }
+        creativePacket.setContents(ItemRegistry.CREATIVE_ITEMS);
         upstream.sendPacket(creativePacket);
+
+        PlayStatusPacket playStatusPacket = new PlayStatusPacket();
+        playStatusPacket.setStatus(PlayStatusPacket.Status.PLAYER_SPAWN);
+        upstream.sendPacket(playStatusPacket);
+
+        UpdateAttributesPacket attributesPacket = new UpdateAttributesPacket();
+        attributesPacket.setRuntimeEntityId(getPlayerEntity().getGeyserId());
+        List<AttributeData> attributes = new ArrayList<>();
+        // Default move speed
+        // Bedrock clients move very fast by default until they get an attribute packet correcting the speed
+        attributes.add(new AttributeData("minecraft:movement", 0.0f, 1024f, 0.1f, 0.1f));
+        attributesPacket.setAttributes(attributes);
+        upstream.sendPacket(attributesPacket);
     }
 
     public void fetchOurSkin(PlayerListPacket.Entry entry) {
@@ -292,6 +265,17 @@ public class GeyserSession implements CommandSender {
         playerSkinPacket.setTrustedSkin(true);
         upstream.sendPacket(playerSkinPacket);
         getConnector().getLogger().debug("Sending skin for " + playerEntity.getUsername() + " " + authData.getUUID());
+    }
+
+    public void login() {
+        if (connector.getAuthType() != AuthType.ONLINE) {
+            if (connector.getAuthType() == AuthType.OFFLINE) {
+                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.offline"));
+            } else {
+                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.login.floodgate"));
+            }
+            authenticate(authData.getName());
+        }
     }
 
     public void authenticate(String username) {
@@ -578,18 +562,57 @@ public class GeyserSession implements CommandSender {
         upstream.sendPacket(startGamePacket);
     }
 
+    public void addTeleport(TeleportCache teleportCache) {
+        teleportMap.put(teleportCache.getTeleportConfirmId(), teleportCache);
+    }
+
     public boolean confirmTeleport(Vector3d position) {
-        if (teleportCache != null) {
-            if (!teleportCache.canConfirm(position)) {
-                GeyserConnector.getInstance().getLogger().debug("Unconfirmed Teleport " + teleportCache.getTeleportConfirmId()
-                        + " Ignore movement " + position + " expected " + teleportCache);
-                return false;
+        int teleportID = -1;
+
+        for (Map.Entry<Integer, TeleportCache> entry : teleportMap.entrySet()) {
+            if (entry.getValue().canConfirm(position)) {
+                if (entry.getValue().getTeleportConfirmId() > teleportID) {
+                    teleportID = entry.getValue().getTeleportConfirmId();
+                }
             }
-            int teleportId = teleportCache.getTeleportConfirmId();
-            teleportCache = null;
-            ClientTeleportConfirmPacket teleportConfirmPacket = new ClientTeleportConfirmPacket(teleportId);
-            sendDownstreamPacket(teleportConfirmPacket);
         }
+
+        Iterator<Map.Entry<Integer, TeleportCache>> it = teleportMap.entrySet().iterator();
+
+        if (teleportID != -1) {
+            // Confirm the current teleport and any earlier ones
+            // TODO: Don't assume that IDs go up over time
+            while (it.hasNext()) {
+                Map.Entry<Integer, TeleportCache> entry = it.next();
+                int nextID = entry.getValue().getTeleportConfirmId();
+                if (nextID <= teleportID) {
+                    ClientTeleportConfirmPacket teleportConfirmPacket = new ClientTeleportConfirmPacket(nextID);
+                    sendDownstreamPacket(teleportConfirmPacket);
+                    it.remove();
+                    connector.getLogger().debug("Confirmed teleport " + nextID);
+                }
+            }
+        }
+
+        if (teleportMap.size() > 0) {
+            int resendID = -1;
+            for (Map.Entry<Integer, TeleportCache> entry : teleportMap.entrySet()) {
+                TeleportCache teleport = entry.getValue();
+                teleport.incrementUnconfirmedFor();
+                if (teleport.shouldResend()) {
+                    if (teleport.getTeleportConfirmId() >= resendID) {
+                        resendID = teleport.getTeleportConfirmId();
+                    }
+                }
+            }
+
+            if (resendID != -1) {
+                connector.getLogger().debug("Resending teleport " + resendID);
+                TeleportCache teleport = teleportMap.get(resendID);
+                getPlayerEntity().moveAbsolute(this, Vector3f.from(teleport.getX(), teleport.getY(), teleport.getZ()), (float) teleport.getYaw(), (float) teleport.getPitch(), true, true);
+            }
+        }
+
         return true;
     }
 
@@ -608,7 +631,7 @@ public class GeyserSession implements CommandSender {
 
     /**
      * Send a packet immediately to the player.
-     * 
+     *
      * @param packet the bedrock packet from the NukkitX protocol lib
      */
     public void sendUpstreamPacketImmediately(BedrockPacket packet) {

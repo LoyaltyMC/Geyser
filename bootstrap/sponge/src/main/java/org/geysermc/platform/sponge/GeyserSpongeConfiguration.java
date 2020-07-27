@@ -149,6 +149,12 @@ public class GeyserSpongeConfiguration implements GeyserConfiguration {
         return node.getNode("cache-chunks").getBoolean(false);
     }
 
+
+    @Override
+    public boolean isAllowCustomSkulls() {
+        return node.getNode("allow-custom-skulls").getBoolean(true);
+    }
+
     @Override
     public boolean isAboveBedrockNetherBuilding() {
         return node.getNode("above-bedrock-nether-building").getBoolean(false);
@@ -196,8 +202,18 @@ public class GeyserSpongeConfiguration implements GeyserConfiguration {
         }
 
         @Override
+        public void setAddress(String address) {
+            node.getNode("address").setValue(address);
+        }
+
+        @Override
         public int getPort() {
             return node.getNode("port").getInt(25565);
+        }
+
+        @Override
+        public void setPort(int port) {
+            node.getNode("port").setValue(port);
         }
 
         @Override

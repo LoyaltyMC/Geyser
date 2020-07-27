@@ -31,8 +31,11 @@ import com.nukkitx.protocol.bedrock.data.inventory.ContainerType;
 import com.nukkitx.protocol.bedrock.data.inventory.InventoryActionData;
 import com.nukkitx.protocol.bedrock.data.inventory.InventorySource;
 import com.nukkitx.protocol.bedrock.packet.ContainerOpenPacket;
+import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.inventory.Inventory;
 import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.inventory.action.Transaction;
+import org.geysermc.connector.network.translators.inventory.action.Refresh;
 import org.geysermc.connector.network.translators.inventory.updater.CursorInventoryUpdater;
 import org.geysermc.connector.network.translators.inventory.updater.InventoryUpdater;
 import org.geysermc.connector.utils.InventoryUtils;
@@ -46,6 +49,11 @@ public class CraftingInventoryTranslator extends BlockInventoryTranslator {
 
     @Override
     public int bedrockSlotToJava(InventoryActionData action) {
+        if (action.getSlot() == 50) {
+            GeyserConnector.getInstance().getLogger().warning("Slot 50 found, please report: " + action);
+            return 0;
+        }
+
         if (action.getSource().getContainerId() == ContainerId.UI) {
             int slotnum = action.getSlot();
             if (slotnum >= 32 && 42 >= slotnum) {
@@ -64,10 +72,8 @@ public class CraftingInventoryTranslator extends BlockInventoryTranslator {
     }
 
     @Override
-    public SlotType getSlotType(int javaSlot) {
-        if (javaSlot == 0)
-            return SlotType.OUTPUT;
-        return SlotType.NORMAL;
+    public boolean isOutput(InventoryActionData action) {
+        return action.getSlot() == 50;
     }
 
     @Override
@@ -81,6 +87,13 @@ public class CraftingInventoryTranslator extends BlockInventoryTranslator {
                 }
             }
         }
+
+        // Remove Useless Items
+        if (actions.stream().anyMatch(a ->
+                a.getSource().getContainerId() == ContainerId.CRAFTING_USE_INGREDIENT)) {
+            return;
+        }
+
         super.translateActions(session, inventory, actions);
     }
 }

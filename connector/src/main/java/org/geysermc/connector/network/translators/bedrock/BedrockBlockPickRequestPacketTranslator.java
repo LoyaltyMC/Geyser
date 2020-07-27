@@ -45,7 +45,7 @@ public class BedrockBlockPickRequestPacketTranslator extends PacketTranslator<Bl
     public void translate(BlockPickRequestPacket packet, GeyserSession session) {
         Vector3i vector = packet.getBlockPosition();
         int blockToPick = session.getConnector().getWorldManager().getBlockAt(session, vector.getX(), vector.getY(), vector.getZ());
-        
+
         // Block is air - chunk caching is probably off
         if (blockToPick == 0) {
             return;
@@ -69,7 +69,7 @@ public class BedrockBlockPickRequestPacketTranslator extends PacketTranslator<Bl
             if (!item.getJavaIdentifier().equals(targetIdentifier)) {
                 continue;
             }
-            
+
             PlayerHotbarPacket hotbarPacket = new PlayerHotbarPacket();
             hotbarPacket.setContainerId(0);
             // Java inventory slot to hotbar slot ID
@@ -91,7 +91,7 @@ public class BedrockBlockPickRequestPacketTranslator extends PacketTranslator<Bl
             if (!item.getJavaIdentifier().equals(targetIdentifier)) {
                 continue;
             }
-            
+
             ClientMoveItemToHotbarPacket packetToSend = new ClientMoveItemToHotbarPacket(i); // https://wiki.vg/Protocol#Pick_Item
             session.sendDownstreamPacket(packetToSend);
             return;

@@ -25,7 +25,7 @@
 
 package org.geysermc.connector.network.translators.bedrock;
 
-import com.nukkitx.protocol.bedrock.packet.PlayerListPacket;
+import com.nukkitx.protocol.bedrock.data.entity.EntityFlag;
 import org.geysermc.connector.entity.PlayerEntity;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
@@ -34,6 +34,8 @@ import org.geysermc.connector.utils.SkinUtils;
 
 import com.nukkitx.protocol.bedrock.packet.SetLocalPlayerAsInitializedPacket;
 
+import java.util.concurrent.TimeUnit;
+
 @Translator(packet = SetLocalPlayerAsInitializedPacket.class)
 public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslator<SetLocalPlayerAsInitializedPacket> {
     @Override
@@ -41,32 +43,24 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
         if (session.getPlayerEntity().getGeyserId() == packet.getRuntimeEntityId()) {
             if (!session.getUpstream().isInitialized()) {
                 session.getUpstream().setInitialized(true);
+                session.login();
 
-                PlayerListPacket playerListPacket = new PlayerListPacket();
-                playerListPacket.setAction(PlayerListPacket.Action.ADD);
                 for (PlayerEntity entity : session.getEntityCache().getEntitiesByType(PlayerEntity.class)) {
                     if (!entity.isValid()) {
                         // async skin loading
                         SkinUtils.requestAndHandleSkinAndCape(entity, session, skinAndCape -> entity.sendPlayer(session));
                     }
-
-                    if (entity.isPlayerList()) {
-                        PlayerListPacket.Entry entry = SkinUtils.buildCachedEntry(entity.getProfile(), entity.getGeyserId());
-                        if (entity == session.getPlayerEntity()) {
-                            // Copy the entry with our identity instead.
-                            PlayerListPacket.Entry copy = new PlayerListPacket.Entry(session.getAuthData().getUUID());
-                            copy.setName(entry.getName());
-                            copy.setEntityId(entry.getEntityId());
-                            copy.setSkin(entry.getSkin());
-                            copy.setXuid(entry.getXuid());
-                            copy.setPlatformChatId(entry.getPlatformChatId());
-                            copy.setTeacher(entry.isTeacher());
-                            entry = copy;
-                        }
-                        playerListPacket.getEntries().add(entry);
-                    }
                 }
-                session.getUpstream().sendPacket(playerListPacket);
+
+                // Send Skulls
+                for (PlayerEntity entity : session.getSkullCache().values()) {
+                    entity.spawnEntity(session);
+
+                    SkinUtils.requestAndHandleSkinAndCape(entity, session, (skinAndCape) -> session.getConnector().getGeneralThreadPool().schedule(() -> {
+                        entity.getMetadata().getFlags().setFlag(EntityFlag.INVISIBLE, false);
+                        entity.updateBedrockMetadata(session);
+                    }, 2, TimeUnit.SECONDS));
+                }
 
             }
         }

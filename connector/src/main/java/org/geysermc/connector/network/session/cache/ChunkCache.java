@@ -57,6 +57,14 @@ public class ChunkCache {
             return;
         }
         ChunkPosition position = new ChunkPosition(chunk.getX(), chunk.getZ());
+        if (chunk.getBiomeData() == null && chunks.containsKey(position)) {
+            Chunk[] oldChunk = chunks.get(position).getChunks();
+            for (int i = 0; i < oldChunk.length; i++) {
+                if (chunk.getChunks()[i] == null) {
+                    chunk.getChunks()[i] = oldChunk[i];
+                }
+            }
+        }
         chunks.put(position, chunk);
     }
 
@@ -72,7 +80,10 @@ public class ChunkCache {
         Chunk chunk = column.getChunks()[position.getY() >> 4];
         Position blockPosition = chunkPosition.getChunkBlock(position.getX(), position.getY(), position.getZ());
         if (chunk != null) {
+            // System.out.println("Before: " + chunk.get(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ()));
+            // System.out.println("Setting: " + block);
             chunk.set(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), block);
+            // System.out.println("After: " + chunk.get(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ()));
         }
     }
 
