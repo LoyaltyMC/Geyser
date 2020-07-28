@@ -149,6 +149,12 @@ public class GeyserSpongeConfiguration implements GeyserConfiguration {
         return node.getNode("cache-chunks").getBoolean(false);
     }
 
+
+    @Override
+    public boolean isAllowCustomSkulls() {
+        return node.getNode("allow-custom-skulls").getBoolean(true);
+    }
+
     @Override
     public boolean isAboveBedrockNetherBuilding() {
         return node.getNode("above-bedrock-nether-building").getBoolean(false);
