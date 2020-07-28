@@ -22,7 +22,7 @@ pipeline {
 
         stage ('Deploy') {
             when {
-                branch "V2"
+                branch "V2.1"
             }
             steps {
                 sh 'echo Skipping'
