@@ -23,21 +23,31 @@
  * @link https://github.com/GeyserMC/Geyser
  */
 
-package org.geysermc.connector.network.translators.java.scoreboard;
+package org.geysermc.connector.network.translators.bedrock.world;
 
+import com.github.steveice10.mc.protocol.data.game.setting.Difficulty;
+import com.nukkitx.protocol.bedrock.packet.SetDifficultyPacket;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
 
-import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerDisplayScoreboardPacket;
-
-@Translator(packet = ServerDisplayScoreboardPacket.class)
-public class JavaDisplayScoreboardTranslator extends PacketTranslator<ServerDisplayScoreboardPacket> {
+@Translator(packet = SetDifficultyPacket.class)
+public class BedrockSetDifficultyTranslator extends PacketTranslator<SetDifficultyPacket> {
 
     @Override
-    public void translate(ServerDisplayScoreboardPacket packet, GeyserSession session) {
-        session.getWorldCache().getScoreboard().registerNewObjective(
-                packet.getName(), packet.getPosition()
-        );
+    public void translate(SetDifficultyPacket packet, GeyserSession session) {
+        // Reset the difficulty on the client
+        SetDifficultyPacket setDifficultyPacket = new SetDifficultyPacket();
+        setDifficultyPacket.setDifficulty(session.getWorldCache().getDifficulty().ordinal());
+        session.sendUpstreamPacket(setDifficultyPacket);
+
+        // Tell the server to update the difficulty, and then its up to the server whether it happens or not
+        Difficulty difficulty = Difficulty.values()[packet.getDifficulty()];
+        if(difficulty != null) {
+            // This only works on vanilla
+            // session.sendDownstreamPacket(new ClientSetDifficultyPacket(difficulty));
+
+            session.getConnector().getWorldManager().setDifficulty(session, difficulty);
+        }
     }
 }

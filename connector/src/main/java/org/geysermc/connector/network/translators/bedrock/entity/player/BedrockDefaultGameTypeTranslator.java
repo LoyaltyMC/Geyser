@@ -23,21 +23,27 @@
  * @link https://github.com/GeyserMC/Geyser
  */
 
-package org.geysermc.connector.network.translators.java.scoreboard;
+package org.geysermc.connector.network.translators.bedrock.entity.player;
 
+import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
+import com.nukkitx.protocol.bedrock.packet.SetDefaultGameTypePacket;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
 
-import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerDisplayScoreboardPacket;
-
-@Translator(packet = ServerDisplayScoreboardPacket.class)
-public class JavaDisplayScoreboardTranslator extends PacketTranslator<ServerDisplayScoreboardPacket> {
+@Translator(packet = SetDefaultGameTypePacket.class)
+public class BedrockDefaultGameTypeTranslator extends PacketTranslator<SetDefaultGameTypePacket> {
 
     @Override
-    public void translate(ServerDisplayScoreboardPacket packet, GeyserSession session) {
-        session.getWorldCache().getScoreboard().registerNewObjective(
-                packet.getName(), packet.getPosition()
-        );
+    public void translate(SetDefaultGameTypePacket packet, GeyserSession session) {
+        // Update the client with the changed value
+        SetDefaultGameTypePacket setDefaultGameTypePacket = new SetDefaultGameTypePacket();
+        setDefaultGameTypePacket.setGamemode(packet.getGamemode());
+        session.sendUpstreamPacket(setDefaultGameTypePacket);
+
+        GameMode gameMode = GameMode.values()[packet.getGamemode()];
+        if(gameMode != null) {
+            session.getConnector().getWorldManager().setDefaultGameMode(session, gameMode);
+        }
     }
 }

@@ -23,21 +23,40 @@
  * @link https://github.com/GeyserMC/Geyser
  */
 
-package org.geysermc.connector.network.translators.java.scoreboard;
+package org.geysermc.connector.network.translators.bedrock.entity.player;
 
+import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
+import com.nukkitx.protocol.bedrock.packet.SetPlayerGameTypePacket;
 import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslator;
 import org.geysermc.connector.network.translators.Translator;
 
-import com.github.steveice10.mc.protocol.packet.ingame.server.scoreboard.ServerDisplayScoreboardPacket;
-
-@Translator(packet = ServerDisplayScoreboardPacket.class)
-public class JavaDisplayScoreboardTranslator extends PacketTranslator<ServerDisplayScoreboardPacket> {
+@Translator(packet = SetPlayerGameTypePacket.class)
+public class BedrockPlayerGameTypeTranslator extends PacketTranslator<SetPlayerGameTypePacket> {
 
     @Override
-    public void translate(ServerDisplayScoreboardPacket packet, GeyserSession session) {
-        session.getWorldCache().getScoreboard().registerNewObjective(
-                packet.getName(), packet.getPosition()
-        );
+    public void translate(SetPlayerGameTypePacket packet, GeyserSession session) {
+        // Reset the game mode on the client
+        SetPlayerGameTypePacket setPlayerGameTypePacket = new SetPlayerGameTypePacket();
+        setPlayerGameTypePacket.setGamemode(session.getGameMode().ordinal());
+        session.sendUpstreamPacket(setPlayerGameTypePacket);
+
+        GameMode gameMode = getGameMode(packet.getGamemode());
+        if(gameMode != null) {
+            session.getConnector().getWorldManager().setPlayerGameMode(session, gameMode);
+        }
+    }
+
+    /**
+     * This point of this method is because sometimes the bedrock client sends weird values.
+     */
+    private GameMode getGameMode(int mode) {
+        switch(mode) {
+            case 0: return GameMode.SURVIVAL;
+            case 1: return GameMode.CREATIVE;
+            case 2: return GameMode.ADVENTURE;
+            case 3: return GameMode.SPECTATOR;
+        }
+        return null;
     }
 }

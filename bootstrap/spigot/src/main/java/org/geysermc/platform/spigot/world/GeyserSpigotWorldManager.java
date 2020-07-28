@@ -26,17 +26,20 @@
 
 package org.geysermc.platform.spigot.world;
 
+import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
+import com.github.steveice10.mc.protocol.data.game.setting.Difficulty;
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.world.GeyserWorldManager;
 import org.geysermc.connector.network.translators.world.WorldManager;
 import org.geysermc.connector.network.translators.world.block.BlockTranslator;
 import us.myles.ViaVersion.protocols.protocol1_13_1to1_13.Protocol1_13_1To1_13;
 import us.myles.ViaVersion.protocols.protocol1_16to1_15_2.data.MappingData;
 
 @AllArgsConstructor
-public class GeyserSpigotWorldManager extends WorldManager {
+public class GeyserSpigotWorldManager extends GeyserWorldManager {
 
     private final boolean isLegacy;
     // You need ViaVersion to connect to an older server with Geyser.
@@ -69,5 +72,10 @@ public class GeyserSpigotWorldManager extends WorldManager {
         } else {
             return BlockTranslator.AIR;
         }
+    }
+
+    @Override
+    public GameMode getDefaultGameMode(GeyserSession session) {
+        return GameMode.valueOf(Bukkit.getDefaultGameMode().name());
     }
 }
