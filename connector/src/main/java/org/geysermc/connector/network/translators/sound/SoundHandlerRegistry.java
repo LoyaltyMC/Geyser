@@ -26,6 +26,8 @@
 
 package org.geysermc.connector.network.translators.sound;
 
+import org.geysermc.connector.event.EventManager;
+import org.geysermc.connector.event.events.registry.SoundHandlerRegistryEvent;
 import org.reflections.Reflections;
 
 import java.util.HashMap;
@@ -36,11 +38,14 @@ import java.util.Map;
  */
 public class SoundHandlerRegistry {
 
-    static final Map<SoundHandler, SoundInteractionHandler<?>> INTERACTION_HANDLERS = new HashMap<>();
+    public static final Map<SoundHandler, SoundInteractionHandler<?>> INTERACTION_HANDLERS = new HashMap<>();
 
     static {
-        Reflections ref = new Reflections("org.geysermc.connector.network.translators.sound");
-        for (Class<?> clazz : ref.getTypesAnnotatedWith(SoundHandler.class)) {
+        SoundHandlerRegistryEvent soundHandlerEvent = EventManager.getInstance().triggerEvent(new SoundHandlerRegistryEvent(
+                new Reflections("org.geysermc.connector.network.translators.sound").getTypesAnnotatedWith(SoundHandler.class))
+        ).getEvent();
+
+        for (Class<?> clazz : soundHandlerEvent.getRegisteredTranslators()) {
             try {
                 SoundInteractionHandler<?> interactionHandler = (SoundInteractionHandler<?>) clazz.newInstance();
                 SoundHandler annotation = clazz.getAnnotation(SoundHandler.class);
@@ -58,12 +63,4 @@ public class SoundHandlerRegistry {
         // no-op
     }
 
-    /**
-     * Returns a map of the interaction handlers
-     *
-     * @return a map of the interaction handlers
-     */
-    public static Map<SoundHandler, SoundInteractionHandler<?>> getInteractionHandlers() {
-        return INTERACTION_HANDLERS;
-    }
 }

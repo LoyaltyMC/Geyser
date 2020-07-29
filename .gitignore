@@ -241,6 +241,7 @@ config.yml
 logs/
 public-key.pem
 locales/
+plugins/
 
 ### VS Code ###
 .vscode
