@@ -75,7 +75,7 @@ public class ConnectorServerEventHandler implements BedrockServerEventHandler {
         pong.setNintendoLimited(false);
         pong.setProtocolVersion(connector.getEdition().getCodec().getProtocolVersion());
         pong.setVersion(null); // Server tries to connect either way and it looks better
-        pong.setIpv4Port(config.getBedrock().getPort());
+        pong.setIpv4Port(-1);
 
         if (config.isPassthroughMotd() && pingInfo != null && pingInfo.getDescription() != null) {
             String[] motd = MessageUtils.getBedrockMessage(MessageSerializer.fromString(pingInfo.getDescription())).split("\n");
