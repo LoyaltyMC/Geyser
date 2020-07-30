@@ -64,6 +64,7 @@ public class PlayerEntity extends LivingEntity {
     private GameProfile profile;
     private UUID uuid;
     private String username;
+    private String displayName;
     private long lastSkinUpdate = -1;
     private boolean playerList = true;
     private final EntityEffectCache effectCache;
@@ -139,7 +140,7 @@ public class PlayerEntity extends LivingEntity {
     public void addPlayerList(GeyserSession session) {
         PlayerListPacket addPlayerListPacket = new PlayerListPacket();
         addPlayerListPacket.setAction(PlayerListPacket.Action.ADD);
-        addPlayerListPacket.getEntries().add(SkinUtils.buildCachedEntry(this));
+        addPlayerListPacket.getEntries().add(SkinUtils.buildCachedEntry(session, this));
         session.sendUpstreamPacket(addPlayerListPacket);
     }
 
@@ -149,7 +150,7 @@ public class PlayerEntity extends LivingEntity {
     public void removePlayerList(GeyserSession session) {
         PlayerListPacket removePlayerListPacket = new PlayerListPacket();
         removePlayerListPacket.setAction(PlayerListPacket.Action.REMOVE);
-        removePlayerListPacket.getEntries().add(SkinUtils.buildCachedEntry(this));
+        removePlayerListPacket.getEntries().add(SkinUtils.buildCachedEntry(session,this));
         session.sendUpstreamPacket(removePlayerListPacket);
     }
 
@@ -426,5 +427,13 @@ public class PlayerEntity extends LivingEntity {
         updateAttributesPacket.setRuntimeEntityId(geyserId);
         updateAttributesPacket.setAttributes(attributes);
         session.sendUpstreamPacket(updateAttributesPacket);
+    }
+
+    /**
+     * Returns the DisplayName if set, otherwise the Username
+     * @return Name of player entity
+     */
+    public String getName() {
+        return displayName == null ? username : displayName;
     }
 }

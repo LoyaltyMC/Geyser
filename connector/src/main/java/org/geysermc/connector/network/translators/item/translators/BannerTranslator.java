@@ -53,7 +53,6 @@ public class BannerTranslator extends ItemTranslator {
     private List<ItemEntry> appliedItems;
 
     public BannerTranslator() {
-        appliedItems = ItemRegistry.ITEM_ENTRIES.values().stream().filter(entry -> entry.getJavaIdentifier().endsWith("banner")).collect(Collectors.toList());
     }
 
     @Override
@@ -96,6 +95,9 @@ public class BannerTranslator extends ItemTranslator {
 
     @Override
     public List<ItemEntry> getAppliedItems() {
+        if (appliedItems == null) {
+            appliedItems = ItemRegistry.ITEM_ENTRIES.values().stream().filter(entry -> entry.getJavaIdentifier().endsWith("banner")).collect(Collectors.toList());
+        }
         return appliedItems;
     }
 

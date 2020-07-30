@@ -53,46 +53,41 @@ import java.util.stream.Collectors;
 
 public abstract class ItemTranslator {
 
+    private static final Int2ObjectMap<ItemTranslator> ITEM_STACK_TRANSLATORS = new Int2ObjectOpenHashMap<>();
+    private static final List<NbtItemStackTranslator> NBT_TRANSLATORS = new ArrayList<>();
     public static final Int2ObjectMap<ItemTranslator> ITEM_STACK_TRANSLATORS = new Int2ObjectOpenHashMap<>();
     public static final List<NbtItemStackTranslator> NBT_TRANSLATORS = new ArrayList<>();
+
+    public static final Register REGISTER = new Register();
 
     protected ItemTranslator() {
     }
 
-    public static void init() {
-        // no-op
+    public static class Register {
+        private static final List<ItemTranslator> REGISTERED_TRANSLATORS = new ArrayList<>();
+
+        public Register nbtItemStackTranslator(NbtItemStackTranslator translator) {
+            NBT_TRANSLATORS.add(translator);
+            return this;
+        }
+
+        public Register itemTranslator(ItemTranslator translator) {
+            REGISTERED_TRANSLATORS.add(translator);
+            return this;
+        }
     }
 
-    static {
-        /* Load item translators */
-        ItemRemapperRegistryEvent itemRemapperEvent = EventManager.getInstance().triggerEvent(new ItemRemapperRegistryEvent(
-                new Reflections("org.geysermc.connector.network.translators.item").getTypesAnnotatedWith(ItemRemapper.class))
-        ).getEvent();
-        
-        Map<NbtItemStackTranslator, Integer> loadedNbtItemTranslators = new HashMap<>();
-        for (Class<?> clazz : itemRemapperEvent.getRegisteredTranslators()) {
-            int priority = clazz.getAnnotation(ItemRemapper.class).priority();
-
-            GeyserConnector.getInstance().getLogger().debug("Found annotated item translator: " + clazz.getCanonicalName());
-
-            try {
-                if (NbtItemStackTranslator.class.isAssignableFrom(clazz)) {
-                    NbtItemStackTranslator nbtItemTranslator = (NbtItemStackTranslator) clazz.newInstance();
-                    loadedNbtItemTranslators.put(nbtItemTranslator, priority);
+    public static void init() {
+        for (ItemTranslator translator : Register.REGISTERED_TRANSLATORS) {
+            List<ItemEntry> appliedItems = translator.getAppliedItems();
+            for (ItemEntry item : appliedItems) {
+                ItemTranslator registered = ITEM_STACK_TRANSLATORS.get(item.getJavaId());
+                if (registered != null) {
+                    GeyserConnector.getInstance().getLogger().error("Could not instantiate item translator " + translator.getClass().getCanonicalName() + "." +
+                            " Item translator " + registered.getClass().getCanonicalName() + " is already registered for the item " + item.getJavaIdentifier());
                     continue;
                 }
-                ItemTranslator itemStackTranslator = (ItemTranslator) clazz.newInstance();
-                List<ItemEntry> appliedItems = itemStackTranslator.getAppliedItems();
-                for (ItemEntry item : appliedItems) {
-                    ItemTranslator registered = ITEM_STACK_TRANSLATORS.get(item.getJavaId());
-                    if (registered != null) {
-                        GeyserConnector.getInstance().getLogger().error(LanguageUtils.getLocaleStringLog("geyser.network.translator.item.already_registered", clazz.getCanonicalName(), registered.getClass().getCanonicalName(), item.getJavaIdentifier()));
-                        continue;
-                    }
-                    ITEM_STACK_TRANSLATORS.put(item.getJavaId(), itemStackTranslator);
-                }
-            } catch (InstantiationException | IllegalAccessException e) {
-                GeyserConnector.getInstance().getLogger().error(LanguageUtils.getLocaleStringLog("geyser.network.translator.item.failed", clazz.getCanonicalName()));
+                ITEM_STACK_TRANSLATORS.put(item.getJavaId(), translator);
             }
         }
 
@@ -328,7 +323,7 @@ public abstract class ItemTranslator {
         if (object instanceof byte[]) {
             return new ByteArrayTag(name, (byte[]) object);
         }
-        
+
         if (object instanceof Byte) {
             return new ByteTag(name, (byte) object);
         }

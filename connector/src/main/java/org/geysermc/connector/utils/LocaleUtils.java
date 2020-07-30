@@ -50,7 +50,7 @@ public class LocaleUtils {
 
     private static String smallestURL = "";
 
-    static {
+    public static void init() {
         // Create the locales folder
         File localesFolder = GeyserConnector.getInstance().getBootstrap().getConfigFolder().resolve("locales").toFile();
         //noinspection ResultOfMethodCallIgnored
@@ -250,9 +250,6 @@ public class LocaleUtils {
         return localeStrings.getOrDefault(messageText, messageText);
     }
 
-    public static void init() {
-        // no-op
-    }
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)

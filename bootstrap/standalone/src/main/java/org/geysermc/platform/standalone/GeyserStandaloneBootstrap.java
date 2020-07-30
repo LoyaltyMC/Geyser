@@ -105,7 +105,7 @@ public class GeyserStandaloneBootstrap implements GeyserBootstrap {
         geyserLogger = new GeyserStandaloneLogger();
 
         LoopbackUtil.checkLoopback(geyserLogger);
-        
+
         try {
             File configFile = FileUtils.fileOrCopiedFromResource("config.yml", (x) -> x.replaceAll("generateduuid", UUID.randomUUID().toString()));
             geyserConfig = FileUtils.loadConfig(configFile, GeyserStandaloneConfiguration.class);
@@ -115,7 +115,12 @@ public class GeyserStandaloneBootstrap implements GeyserBootstrap {
         }
         GeyserConfiguration.checkGeyserConfiguration(geyserConfig, geyserLogger);
 
-        connector = GeyserConnector.start(PlatformType.STANDALONE, this);
+        try {
+            connector = GeyserConnector.start(PlatformType.STANDALONE, this);
+        } catch (GeyserConnector.GeyserConnectorException e) {
+            geyserLogger.severe(e.getMessage(), e.getCause());
+            System.exit(1);
+        }
         geyserCommandManager = new GeyserCommandManager(connector);
 
         if (gui != null) {

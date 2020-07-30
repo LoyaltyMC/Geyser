@@ -51,7 +51,7 @@ public class ItemRegistry {
 
     private static final Map<String, ItemEntry> JAVA_IDENTIFIER_MAP = new HashMap<>();
 
-    public static final ItemData[] CREATIVE_ITEMS;
+    public static ItemData[] CREATIVE_ITEMS;
 
     public static final List<StartGamePacket.ItemEntry> ITEMS = new ArrayList<>();
     public static final Int2ObjectMap<ItemEntry> ITEM_ENTRIES = new Int2ObjectOpenHashMap<>();
@@ -68,12 +68,8 @@ public class ItemRegistry {
     public static int BARRIER_INDEX = 0;
 
     public static void init() {
-        // no-op
-    }
-
-    static {
         /* Load item palette */
-        InputStream stream = FileUtils.getResource("bedrock/items.json");
+        InputStream stream = FileUtils.getResource("data/items.json");
 
         TypeReference<List<JsonNode>> itemEntriesType = new TypeReference<List<JsonNode>>() {
         };
@@ -110,7 +106,9 @@ public class ItemRegistry {
                             entry.getValue().get("bedrock_data").intValue(),
                             entry.getValue().get("tool_type").textValue(),
                             entry.getValue().get("tool_tier").textValue(),
-                            entry.getValue().get("is_block") != null && entry.getValue().get("is_block").booleanValue()));
+                            entry.getValue().get("is_block") != null && entry.getValue().get("is_block").booleanValue(),
+                            entry.getValue().get("extra")
+                    ));
                 } else {
                     ITEM_ENTRIES.put(itemIndex, new ToolItemEntry(
                             entry.getKey(), itemIndex,
@@ -118,14 +116,18 @@ public class ItemRegistry {
                             entry.getValue().get("bedrock_data").intValue(),
                             entry.getValue().get("tool_type").textValue(),
                             "",
-                            entry.getValue().get("is_block").booleanValue()));
+                            entry.getValue().get("is_block").booleanValue(),
+                            entry.getValue().get("extra")
+                    ));
                 }
             } else {
                 ITEM_ENTRIES.put(itemIndex, new ItemEntry(
                         entry.getKey(), itemIndex,
                         entry.getValue().get("bedrock_id").intValue(),
                         entry.getValue().get("bedrock_data").intValue(),
-                        entry.getValue().get("is_block") != null && entry.getValue().get("is_block").booleanValue()));
+                        entry.getValue().get("is_block") != null && entry.getValue().get("is_block").booleanValue(),
+                        entry.getValue().get("extra")
+                ));
             }
             switch (entry.getKey()) {
                 case "minecraft:barrier":
@@ -151,10 +153,10 @@ public class ItemRegistry {
         }
 
         // Add the loadstonecompass since it doesn't exist on java but we need it for item conversion
-        ITEM_ENTRIES.put(itemIndex, new ItemEntry("minecraft:lodestonecompass", itemIndex, 741, 0, false));
+        ITEM_ENTRIES.put(itemIndex, new ItemEntry("minecraft:lodestonecompass", itemIndex, 741, 0, false, null));
 
         /* Load creative items */
-        stream = FileUtils.getResource("bedrock/creative_items.json");
+        stream = FileUtils.getResource("data/creative_items.json");
 
         JsonNode creativeItemEntries;
         try {

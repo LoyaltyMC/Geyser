@@ -91,6 +91,9 @@ public abstract class GeyserJacksonConfiguration implements GeyserConfiguration 
     @JsonProperty("allow-custom-skulls")
     private boolean allowCustomSkulls;
 
+    @JsonProperty("cache-images")
+    private int cacheImages = 180;
+
     @JsonProperty("above-bedrock-nether-building")
     private boolean aboveBedrockNetherBuilding;
 
@@ -104,6 +107,8 @@ public abstract class GeyserJacksonConfiguration implements GeyserConfiguration 
 
         private String motd1;
         private String motd2;
+
+        private String edition = "bedrock";
     }
 
     @Getter

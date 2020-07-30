@@ -16,6 +16,10 @@ bedrock:
   # The MOTD that will be broadcasted to Minecraft: Bedrock Edition clients. Irrelevant if "passthrough-motd" is set to true
   motd1: "GeyserMC"
   motd2: "Another GeyserMC forced host."
+
+  # Edition - bedrock or education
+  edition: bedrock
+
 remote:
   # The IP address of the remote (Java Edition) server
   address: 127.0.0.1
@@ -92,6 +96,9 @@ cache-chunks: false
 
 # Allows custom skulls to be displayed.
 allow-custom-skulls: true
+
+# Specify how many days images will be cached to disk. A value of 0 is disabled.
+cache-images: 0
 
 # Bedrock prevents building and displaying blocks above Y127 in the Nether -
 # enabling this config option works around that by changing the Nether dimension ID

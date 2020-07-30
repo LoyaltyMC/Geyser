@@ -49,7 +49,18 @@ import java.util.function.Consumer;
 
 public class SkinUtils {
 
-    public static PlayerListPacket.Entry buildCachedEntry(PlayerEntity playerEntity) {
+    public static Register REGISTER = new Register();
+    private static Shim SHIM;
+
+    public static class Register {
+
+        public Register shim(Shim shim) {
+            SHIM = shim;
+            return this;
+        }
+    }
+
+    public static PlayerListPacket.Entry buildCachedEntry(GeyserSession session, PlayerEntity playerEntity) {
         GameProfileData data = GameProfileData.from(playerEntity.getProfile());
         SkinProvider.Cape cape = SkinProvider.getCachedCape(data.getCapeUrl());
 
@@ -59,11 +70,12 @@ public class SkinUtils {
         }
 
         return buildEntryManually(
+                session,
                 playerEntity.getProfile().getId(),
-                playerEntity.getProfile().getName(),
+                playerEntity.getName(),
                 playerEntity.getGeyserId(),
-                playerEntity.getProfile().getIdAsString(),
-                SkinProvider.getCachedSkin(playerEntity.getProfile().getId()).getSkinData(),
+                skin.getTextureUrl(),
+                skin.getSkinData(),
                 cape.getCapeId(),
                 cape.getCapeData(),
                 geometry.getGeometryName(),
@@ -216,18 +228,19 @@ public class SkinUtils {
                             if (entity.getLastSkinUpdate() < skin.getRequestedOn()) {
                                 entity.setLastSkinUpdate(skin.getRequestedOn());
 
-                                if (session.getUpstream().isInitialized()) {
-                                    PlayerListPacket.Entry updatedEntry = buildEntryManually(
-                                            entity.getUuid(),
-                                            entity.getUsername(),
-                                            entity.getGeyserId(),
-                                            entity.getUuid().toString(),
-                                            skin.getSkinData(),
-                                            cape.getCapeId(),
-                                            cape.getCapeData(),
-                                            geometry.getGeometryName(),
-                                            geometry.getGeometryData()
-                                    );
+                            if (session.getUpstream().isInitialized()) {
+                                PlayerListPacket.Entry updatedEntry = buildEntryManually(
+                                        session,
+                                        entity.getUuid(),
+                                        entity.getName(),
+                                        entity.getGeyserId(),
+                                        skin.getTextureUrl(),
+                                        skin.getSkinData(),
+                                        cape.getCapeId(),
+                                        cape.getCapeData(),
+                                        geometry.getGeometryName(),
+                                        geometry.getGeometryData()
+                                );
 
                                     // If it is our skin we replace the UUID with the authdata UUID
                                     if (session.getPlayerEntity() == entity) {
@@ -267,7 +280,8 @@ public class SkinUtils {
     }
 
     public static void handleBedrockSkin(PlayerEntity playerEntity, BedrockClientData clientData) {
-        if (EventManager.getInstance().triggerEvent(new LoadBedrockSkinEvent(playerEntity, clientData)).getEvent().isCancelled()) {
+        if (SHIM != null) {
+            SHIM.handleBedrockSkin(playerEntity, clientData);
             return;
         }
 
@@ -280,7 +294,6 @@ public class SkinUtils {
             byte[] capeBytes = clientData.getCapeData();
 
             byte[] geometryNameBytes = Base64.getDecoder().decode(clientData.getGeometryName().getBytes("UTF-8"));
-            System.err.println(new String(geometryNameBytes));
             byte[] geometryBytes = Base64.getDecoder().decode(clientData.getGeometryData().getBytes("UTF-8"));
 
             if (skinBytes.length <= (128 * 128 * 4) && !clientData.isPersonaSkin()) {
@@ -297,5 +310,9 @@ public class SkinUtils {
         } catch (Exception e) {
             throw new AssertionError("Failed to cache skin for bedrock user (" + playerEntity.getUsername() + "): ", e);
         }
+    }
+
+    public interface Shim {
+        void handleBedrockSkin(PlayerEntity playerEntity, BedrockClientData clientData);
     }
 }

@@ -25,11 +25,9 @@
 
 package org.geysermc.connector.network.translators;
 
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerKeepAlivePacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.ServerPlayerListDataPacket;
-import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerUpdateLightPacket;
-import com.github.steveice10.packetlib.packet.Packet;
-import com.nukkitx.protocol.bedrock.BedrockPacket;
+import java.util.HashMap;
+import java.util.Map;
+
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import org.geysermc.connector.GeyserConnector;
@@ -39,8 +37,8 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.utils.LanguageUtils;
 import org.reflections.Reflections;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.github.steveice10.packetlib.packet.Packet;
+import com.nukkitx.protocol.bedrock.BedrockPacket;
 
 @Getter
 public class PacketTranslatorRegistry<T> {
@@ -51,45 +49,26 @@ public class PacketTranslatorRegistry<T> {
 
     public static final ObjectArrayList<Class<?>> IGNORED_PACKETS = new ObjectArrayList<>();
 
-    static {
-        PacketTranslatorRegistryEvent event = EventManager.getInstance().triggerEvent(new PacketTranslatorRegistryEvent(
-                new Reflections("org.geysermc.connector.network.translators").getTypesAnnotatedWith(Translator.class))
-        ).getEvent();
+    public static final Register REGISTER = new Register();
 
-        for (Class<?> clazz : event.getRegisteredTranslators()) {
-            Class<?> packet = clazz.getAnnotation(Translator.class).packet();
-
-            GeyserConnector.getInstance().getLogger().debug("Found annotated translator: " + clazz.getCanonicalName() + " : " + packet.getSimpleName());
-
-            try {
-                if (Packet.class.isAssignableFrom(packet)) {
-                    Class<? extends Packet> targetPacket = (Class<? extends Packet>) packet;
-                    PacketTranslator<? extends Packet> translator = (PacketTranslator<? extends Packet>) clazz.newInstance();
-
-                    JAVA_TRANSLATOR.translators.put(targetPacket, translator);
-                } else if (BedrockPacket.class.isAssignableFrom(packet)) {
-                    Class<? extends BedrockPacket> targetPacket = (Class<? extends BedrockPacket>) packet;
-                    PacketTranslator<? extends BedrockPacket> translator = (PacketTranslator<? extends BedrockPacket>) clazz.newInstance();
-
-                    BEDROCK_TRANSLATOR.translators.put(targetPacket, translator);
-                } else {
-                    GeyserConnector.getInstance().getLogger().error(LanguageUtils.getLocaleStringLog("geyser.network.translator.invalid_target", clazz.getCanonicalName()));
-                }
-            } catch (InstantiationException | IllegalAccessException e) {
-                GeyserConnector.getInstance().getLogger().error(LanguageUtils.getLocaleStringLog("geyser.network.translator.failed", clazz.getCanonicalName()));
-            }
+    public static class Register {
+        public Register bedrockPacketTranslator(Class<? extends BedrockPacket> packet, PacketTranslator<? extends BedrockPacket> translator) {
+            BEDROCK_TRANSLATOR.translators.put(packet, translator);
+            return this;
         }
 
-        IGNORED_PACKETS.add(ServerKeepAlivePacket.class); // Handled by MCProtocolLib
-        IGNORED_PACKETS.add(ServerUpdateLightPacket.class); // Light is handled on Bedrock for us
-        IGNORED_PACKETS.add(ServerPlayerListDataPacket.class); // Cant be implemented in bedrock
+        public Register javaPacketTranslator(Class<? extends Packet> packet, PacketTranslator<? extends Packet> translator) {
+            JAVA_TRANSLATOR.translators.put(packet, translator);
+            return this;
+        }
+
+        public Register ignoredPackets(Class<?> packet) {
+            IGNORED_PACKETS.add(packet);
+            return this;
+        }
     }
 
     private PacketTranslatorRegistry() {
-    }
-
-    public static void init() {
-        // no-op
     }
 
     @SuppressWarnings("unchecked")

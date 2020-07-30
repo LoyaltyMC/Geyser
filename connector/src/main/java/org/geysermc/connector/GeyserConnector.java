@@ -28,9 +28,7 @@ package org.geysermc.connector;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.BedrockServer;
-import com.nukkitx.protocol.bedrock.v407.Bedrock_v407;
 import lombok.Getter;
 import lombok.Setter;
 import org.geysermc.connector.bootstrap.GeyserBootstrap;
@@ -41,23 +39,19 @@ import org.geysermc.connector.bootstrap.GeyserBootstrap;
 import org.geysermc.connector.command.CommandManager;
 import org.geysermc.connector.event.EventManager;
 import org.geysermc.connector.configuration.GeyserConfiguration;
-import org.geysermc.connector.event.events.network.BedrockCodecRegistryEvent;
+import org.geysermc.connector.event.events.geyser.GeyserStartEvent;
 import org.geysermc.connector.metrics.Metrics;
 import org.geysermc.connector.network.ConnectorServerEventHandler;
 import org.geysermc.connector.network.remote.RemoteServer;
 import org.geysermc.connector.network.session.GeyserSession;
-import org.geysermc.connector.network.translators.BiomeTranslator;
 import org.geysermc.connector.network.translators.EntityIdentifierRegistry;
-import org.geysermc.connector.network.translators.PacketTranslatorRegistry;
 import org.geysermc.connector.network.translators.effect.EffectRegistry;
 import org.geysermc.connector.network.translators.item.ItemRegistry;
 import org.geysermc.connector.network.translators.item.ItemTranslator;
 import org.geysermc.connector.network.translators.item.PotionMixRegistry;
-import org.geysermc.connector.network.translators.sound.SoundHandlerRegistry;
 import org.geysermc.connector.network.translators.sound.SoundRegistry;
 import org.geysermc.connector.network.translators.world.WorldManager;
 import org.geysermc.connector.network.translators.world.block.BlockTranslator;
-import org.geysermc.connector.network.translators.world.block.entity.BlockEntityTranslator;
 import org.geysermc.connector.plugin.PluginManager;
 import org.geysermc.connector.event.events.geyser.GeyserStopEvent;
 import org.geysermc.connector.network.translators.world.collision.CollisionTranslator;
@@ -65,6 +59,7 @@ import org.geysermc.connector.utils.DimensionUtils;
 import org.geysermc.connector.utils.DockerCheck;
 import org.geysermc.connector.utils.LanguageUtils;
 import org.geysermc.connector.utils.LocaleUtils;
+import org.geysermc.connector.utils.SkinProvider;
 
 import javax.naming.directory.Attribute;
 import javax.naming.directory.InitialDirContext;
@@ -83,8 +78,6 @@ public class GeyserConnector {
     public static final ObjectMapper JSON_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
-
-    public static BedrockPacketCodec BEDROCK_PACKET_CODEC;
 
     public static final String NAME = "Geyser";
     public static final String VERSION = "DEV"; // A fallback for running in IDEs
@@ -107,6 +100,11 @@ public class GeyserConnector {
     private PlatformType platformType;
     private GeyserBootstrap bootstrap;
 
+    private final GeyserLogger logger;
+    private final GeyserConfiguration config;
+
+    private GeyserEdition edition;
+
     private final EventManager eventManager;
     private final PluginManager pluginManager;
 
@@ -114,15 +112,15 @@ public class GeyserConnector {
 
     private Metrics metrics;
 
-    private GeyserConnector(PlatformType platformType, GeyserBootstrap bootstrap) {
+    private GeyserConnector(PlatformType platformType, GeyserBootstrap bootstrap) throws GeyserConnectorException {
         long startupTime = System.currentTimeMillis();
 
         instance = this;
 
         this.bootstrap = bootstrap;
 
-        GeyserLogger logger = bootstrap.getGeyserLogger();
-        GeyserConfiguration config = bootstrap.getGeyserConfig();
+        logger = bootstrap.getGeyserLogger();
+        config = bootstrap.getGeyserConfig();
 
         this.platformType = platformType;
 
@@ -136,27 +134,34 @@ public class GeyserConnector {
 
         logger.setDebug(config.isDebugMode());
 
+        // Register Editions
+        GeyserEdition.registerEdition("bedrock", org.geysermc.connector.edition.mcpe.Edition.class);
+        GeyserEdition.registerEdition("education",  org.geysermc.connector.edition.mcee.Edition.class);
+
         this.eventManager = new EventManager(this);
         this.pluginManager = new PluginManager(this, bootstrap.getConfigFolder().resolve("plugins").toFile());
 
         // Set Codec
-        BEDROCK_PACKET_CODEC = eventManager.triggerEvent(new BedrockCodecRegistryEvent(Bedrock_v407.V407_CODEC)).getEvent().getCodec();
+//        BEDROCK_PACKET_CODEC = eventManager.triggerEvent(new BedrockCodecRegistryEvent(Bedrock_v407.V407_CODEC)).getEvent().getCodec();
 
-        PacketTranslatorRegistry.init();
+        try {
+            this.edition = GeyserEdition.create(this, config.getBedrock().getEdition());
+        } catch (GeyserEdition.InvalidEditionException e) {
+            throw new GeyserConnectorException(e.getMessage(), e.getCause());
+        }
 
-        /* Initialize translators and registries */
-        BiomeTranslator.init();
+        // Initialize translators and registries
         BlockTranslator.init();
-        BlockEntityTranslator.init();
         EffectRegistry.init();
         EntityIdentifierRegistry.init();
+        LocaleUtils.init();
         ItemRegistry.init();
         ItemTranslator.init();
         CollisionTranslator.init();
         LocaleUtils.init();
         PotionMixRegistry.init();
         SoundRegistry.init();
-        SoundHandlerRegistry.init();
+        SkinProvider.init();
 
         if (platformType != PlatformType.STANDALONE) {
             DockerCheck.check(bootstrap);
@@ -207,6 +212,7 @@ public class GeyserConnector {
             metrics.addCustomChart(new Metrics.SingleLineChart("players", players::size));
             metrics.addCustomChart(new Metrics.SimplePie("authMode", authType.name()::toLowerCase));
             metrics.addCustomChart(new Metrics.SimplePie("platform", platformType::getPlatformName));
+            metrics.addCustomChart(new Metrics.SimplePie("edition", () -> config.getBedrock().getEdition()));
         }
 
         boolean isGui = false;
@@ -297,7 +303,7 @@ public class GeyserConnector {
         players.remove(player);
     }
 
-    public static GeyserConnector start(PlatformType platformType, GeyserBootstrap bootstrap) {
+    public static GeyserConnector start(PlatformType platformType, GeyserBootstrap bootstrap) throws GeyserConnectorException {
         return new GeyserConnector(platformType, bootstrap);
     }
 
@@ -358,5 +364,11 @@ public class GeyserConnector {
 
     public static GeyserConnector getInstance() {
         return instance;
+    }
+
+    public static class GeyserConnectorException extends Exception {
+        public GeyserConnectorException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }

@@ -45,12 +45,8 @@ public class EntityIdentifierRegistry {
     }
 
     public static void init() {
-        // no-op
-    }
-
-    static {
         /* Load entity identifiers */
-        InputStream stream = FileUtils.getResource("bedrock/entity_identifiers.dat");
+        InputStream stream = FileUtils.getResource("data/entity_identifiers.dat");
 
         try (NBTInputStream nbtInputStream = NbtUtils.createNetworkReader(stream)) {
             ENTITY_IDENTIFIERS = (NbtMap) nbtInputStream.readTag();

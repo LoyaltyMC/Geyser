@@ -50,9 +50,9 @@ public class SkinProvider {
     public static final boolean ALLOW_THIRD_PARTY_CAPES = GeyserConnector.getInstance().getConfig().isAllowThirdPartyCapes();
     private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(ALLOW_THIRD_PARTY_CAPES ? 21 : 14);
 
-    public static final byte[] STEVE_SKIN = new ProvidedSkin("bedrock/skin/skin_steve.png").getSkin();
+    public static final byte[] STEVE_SKIN = new ProvidedSkin("skin/skin_steve.png").getSkin();
     public static final Skin EMPTY_SKIN = new Skin(-1, "steve", STEVE_SKIN);
-    public static final byte[] ALEX_SKIN = new ProvidedSkin("bedrock/skin/skin_alex.png").getSkin();
+    public static final byte[] ALEX_SKIN = new ProvidedSkin("skin/skin_alex.png").getSkin();
     public static final Skin EMPTY_SKIN_ALEX = new Skin(-1, "alex", ALEX_SKIN);
     private static Map<UUID, Skin> cachedSkins = new ConcurrentHashMap<>();
     private static Map<UUID, CompletableFuture<Skin>> requestedSkins = new ConcurrentHashMap<>();
@@ -72,9 +72,9 @@ public class SkinProvider {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final int CACHE_INTERVAL = 8 * 60 * 1000; // 8 minutes
 
-    static {
+    public static void init() {
         /* Load in the normal ears geometry */
-        InputStream earsStream = FileUtils.getResource("bedrock/skin/geometry.humanoid.ears.json");
+        InputStream earsStream = FileUtils.getResource("skin/geometry.humanoid.ears.json");
 
         StringBuilder earsDataBuilder = new StringBuilder();
         try (Reader reader = new BufferedReader(new InputStreamReader(earsStream, Charset.forName(StandardCharsets.UTF_8.name())))) {
@@ -90,7 +90,7 @@ public class SkinProvider {
 
 
         /* Load in the slim ears geometry */
-        earsStream = FileUtils.getResource("bedrock/skin/geometry.humanoid.earsSlim.json");
+        earsStream = FileUtils.getResource("skin/geometry.humanoid.earsSlim.json");
 
         earsDataBuilder = new StringBuilder();
         try (Reader reader = new BufferedReader(new InputStreamReader(earsStream, Charset.forName(StandardCharsets.UTF_8.name())))) {
@@ -105,7 +105,7 @@ public class SkinProvider {
         EARS_GEOMETRY_SLIM = earsDataBuilder.toString();
 
         /* Load in the custom skull geometry */
-        InputStream skullStream = FileUtils.getResource("bedrock/skin/geometry.humanoid.customskull.json");
+        InputStream skullStream = FileUtils.getResource("skin/geometry.humanoid.customskull.json");
 
         StringBuilder skullDataBuilder = new StringBuilder();
         try (Reader reader = new BufferedReader(new InputStreamReader(skullStream, Charset.forName(StandardCharsets.UTF_8.name())))) {
@@ -118,7 +118,6 @@ public class SkinProvider {
         }
 
         SKULL_GEOMETRY = new SkinGeometry("{\"geometry\" :{\"default\" :\"geometry.humanoid.customskull" + "\"}}", skullDataBuilder.toString(), false);
-    }
 
     public static boolean hasSkinCached(UUID uuid) {
         return cachedSkins.containsKey(uuid);

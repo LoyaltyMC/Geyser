@@ -101,7 +101,13 @@ public class GeyserSpigotPlugin extends JavaPlugin implements GeyserBootstrap {
 
         geyserConfig.loadFloodgate(this);
 
-        this.connector = GeyserConnector.start(PlatformType.SPIGOT, this);
+        try {
+            this.connector = GeyserConnector.start(PlatformType.SPIGOT, this);
+        } catch (GeyserConnector.GeyserConnectorException e) {
+            geyserLogger.error(e.getMessage(), e.getCause());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         if (geyserConfig.isLegacyPingPassthrough()) {
             this.geyserSpigotPingPassthrough = GeyserLegacyPingPassthrough.init(connector);

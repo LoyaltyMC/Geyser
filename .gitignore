@@ -241,7 +241,9 @@ config.yml
 logs/
 public-key.pem
 locales/
+cache/
+tokens.yml
 plugins/
 
-### VS Code ###
-.vscode
+## Ignore old mappings folder
+connector/src/main/resources/mappings

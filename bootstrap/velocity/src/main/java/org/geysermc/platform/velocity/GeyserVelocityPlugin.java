@@ -111,7 +111,12 @@ public class GeyserVelocityPlugin implements GeyserBootstrap {
 
         geyserConfig.loadFloodgate(this, proxyServer, configFolder.toFile());
 
-        this.connector = GeyserConnector.start(PlatformType.VELOCITY, this);
+        try {
+            this.connector = GeyserConnector.start(PlatformType.VELOCITY, this);
+        } catch (GeyserConnector.GeyserConnectorException e) {
+            logger.error(e.getMessage(), e.getCause());
+            return;
+        }
 
         this.geyserCommandManager = new GeyserVelocityCommandManager(connector);
         this.commandManager.register(new GeyserVelocityCommandExecutor(connector), "geyser");

@@ -41,7 +41,6 @@ import org.geysermc.connector.network.translators.inventory.action.Execute;
 import org.geysermc.connector.network.translators.inventory.updater.CursorInventoryUpdater;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AnvilInventoryTranslator extends BlockInventoryTranslator {
     public AnvilInventoryTranslator() {
@@ -137,14 +136,11 @@ public class AnvilInventoryTranslator extends BlockInventoryTranslator {
                 String rename;
                 ItemData item = from.action.getFromItem();
                 NbtMap tag = item.getTag();
+                String rename;
                 if (tag != null) {
                     String name = tag.getCompound("display").getString("Name");
-                    try {
-                        Component component = GsonComponentSerializer.gson().deserialize(name);
-                        rename = LegacyComponentSerializer.legacySection().serialize(component);
-                    } catch (JsonSyntaxException e) {
-                        rename = name;
-                    }
+                    Component component = GsonComponentSerializer.gson().deserialize(name);
+                    rename = LegacyComponentSerializer.legacySection().serialize(component);
                 } else {
                     rename = "";
                 }

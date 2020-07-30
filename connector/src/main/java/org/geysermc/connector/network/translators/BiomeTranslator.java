@@ -52,7 +52,7 @@ public class BiomeTranslator {
 
     static {
         /* Load biomes */
-        InputStream stream = FileUtils.getResource("bedrock/biome_definitions.dat");
+        InputStream stream = FileUtils.getResource("data/biome_definitions.dat");
 
         NbtMap biomesTag;
 

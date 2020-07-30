@@ -41,16 +41,18 @@ import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.event.EventManager;
 import org.geysermc.connector.event.events.registry.BlockEntityRegistryEvent;
 import org.geysermc.connector.network.translators.world.block.entity.BlockEntity;
+import org.geysermc.connector.network.translators.world.block.entity.BlockEntityTranslator;
 import org.geysermc.connector.utils.FileUtils;
 import org.reflections.Reflections;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
 public class BlockTranslator {
-    public static final NbtList<NbtMap> BLOCKS;
+    public static NbtList<NbtMap> BLOCKS;
     public static final int AIR = 0;
-    public static final int BEDROCK_WATER_ID;
+    public static int BEDROCK_WATER_ID;
 
     public static final Int2IntMap JAVA_TO_BEDROCK_BLOCK_MAP = new Int2IntOpenHashMap();
     public static final Int2IntMap BEDROCK_TO_JAVA_BLOCK_MAP = new Int2IntOpenHashMap();
@@ -69,18 +71,29 @@ public class BlockTranslator {
 
     // For block breaking animation math
     public static final IntSet JAVA_RUNTIME_WOOL_IDS = new IntOpenHashSet();
-    public static final int JAVA_RUNTIME_COBWEB_ID;
+    public static int JAVA_RUNTIME_COBWEB_ID;
 
-    public static final int JAVA_RUNTIME_FURNACE_ID;
-    public static final int JAVA_RUNTIME_FURNACE_LIT_ID;
+    public static int JAVA_RUNTIME_FURNACE_ID;
+    public static int JAVA_RUNTIME_FURNACE_LIT_ID;
 
-    public static final int JAVA_RUNTIME_SPAWNER_ID;
+    public static int JAVA_RUNTIME_SPAWNER_ID;
 
     public static final int BLOCK_STATE_VERSION = 17825806;
 
-    static {
+    public static Register REGISTER = new Register();
+    private static Shim SHIM;
+
+    public static class Register {
+
+        public Register shim(Shim shim) {
+            SHIM = shim;
+            return this;
+        }
+    }
+
+    public static void init() {
         /* Load block palette */
-        InputStream stream = FileUtils.getResource("bedrock/runtime_block_states.dat");
+        InputStream stream = FileUtils.getResource("data/runtime_block_states.dat");
 
         NbtList<NbtMap> blocksTag;
         try (NBTInputStream nbtInputStream = NbtUtils.createNetworkReader(stream)) {
@@ -92,7 +105,15 @@ public class BlockTranslator {
         Map<NbtMap, NbtMap> blockStateMap = new HashMap<>();
 
         for (NbtMap tag : blocksTag) {
-            if (blockStateMap.putIfAbsent(tag.getCompound("block"), tag) != null) {
+            NbtMapBuilder tagBuilder = NbtMap.builder();
+
+            tagBuilder.put("block", tag.getCompound("block"));
+
+            if (tag.getShort("meta", (short) -1) != -1) {
+                tagBuilder.putShort("meta", tag.getShort("meta"));
+            }
+
+            if (blockStateMap.putIfAbsent(tagBuilder.build(), tag) != null) {
                 throw new AssertionError("Duplicate block states in Bedrock palette");
             }
         }
@@ -104,6 +125,13 @@ public class BlockTranslator {
         } catch (Exception e) {
             throw new AssertionError("Unable to load Java block mappings", e);
         }
+
+        // Load Block Overrides
+        JsonNode blocksOverride = null;
+        try (InputStream is = FileUtils.getResource("overrides/blocks.json")) {
+            blocksOverride = GeyserConnector.JSON_MAPPER.readTree(is);
+        } catch (IOException | AssertionError ignored) { }
+
         Object2IntMap<NbtMap> addedStatesMap = new Object2IntOpenHashMap<>();
         addedStatesMap.defaultReturnValue(-1);
         List<NbtMap> paletteList = new ArrayList<>();
@@ -124,6 +152,12 @@ public class BlockTranslator {
             javaRuntimeId++;
             Map.Entry<String, JsonNode> entry = blocksIterator.next();
             String javaId = entry.getKey();
+
+            // Check for an override
+            if (blocksOverride != null && blocksOverride.has(javaId)) {
+                entry = new AbstractMap.SimpleEntry<>(javaId, blocksOverride.get(javaId));
+            }
+
             NbtMap blockTag = buildBedrockState(entry.getValue());
 
             // TODO fix this, (no block should have a null hardness)
@@ -263,11 +297,11 @@ public class BlockTranslator {
     private BlockTranslator() {
     }
 
-    public static void init() {
-        // no-op
-    }
-
     private static NbtMap buildBedrockState(JsonNode node) {
+        if (SHIM != null) {
+            return SHIM.buildBedrockState(node);
+        }
+
         NbtMapBuilder tagBuilder = NbtMap.builder();
         tagBuilder.putString("name", node.get("bedrock_identifier").textValue())
                 .putInt("version", BlockTranslator.BLOCK_STATE_VERSION);
@@ -294,7 +328,9 @@ public class BlockTranslator {
             }
         }
         tagBuilder.put("states", statesBuilder.build());
-        return tagBuilder.build();
+        return NbtMap.builder()
+                .putCompound("block", tagBuilder.build())
+                .build();
     }
 
     public static int getBedrockBlockId(int state) {
@@ -335,5 +371,9 @@ public class BlockTranslator {
 
     public static int getJavaWaterloggedState(int bedrockId) {
         return BEDROCK_TO_JAVA_BLOCK_MAP.get(1 << 31 | bedrockId);
+    }
+
+    public interface Shim {
+        NbtMap buildBedrockState(JsonNode node);
     }
 }

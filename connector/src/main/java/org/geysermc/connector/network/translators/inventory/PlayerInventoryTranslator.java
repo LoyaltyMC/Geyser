@@ -43,7 +43,7 @@ import org.geysermc.connector.utils.LanguageUtils;
 import java.util.List;
 
 public class PlayerInventoryTranslator extends BaseInventoryTranslator {
-    private static final ItemData UNUSUABLE_CRAFTING_SPACE_BLOCK = InventoryUtils.createUnusableSpaceBlock(LanguageUtils.getLocaleStringLog("geyser.inventory.unusable_item.creative"));
+    private static ItemData UNUSUABLE_CRAFTING_SPACE_BLOCK;
 
     public PlayerInventoryTranslator() {
         super(46);
@@ -97,7 +97,7 @@ public class PlayerInventoryTranslator extends BaseInventoryTranslator {
             slotPacket.setSlot(i + 27);
 
             if (session.getGameMode() == GameMode.CREATIVE) {
-                slotPacket.setItem(UNUSUABLE_CRAFTING_SPACE_BLOCK);
+                slotPacket.setItem(getUnusuableCraftingSpaceBlock());
             }else{
                 slotPacket.setItem(ItemTranslator.translateToBedrock(session, inventory.getItem(i)));
             }
@@ -244,5 +244,13 @@ public class PlayerInventoryTranslator extends BaseInventoryTranslator {
         }
 
         super.translateActions(session, inventory, actions);
+    }
+
+    private static ItemData getUnusuableCraftingSpaceBlock() {
+        if (UNUSUABLE_CRAFTING_SPACE_BLOCK == null) {
+            UNUSUABLE_CRAFTING_SPACE_BLOCK = InventoryUtils.createUnusableSpaceBlock(LanguageUtils.getLocaleStringLog("geyser.inventory.unusable_item.creative"));
+        }
+
+        return UNUSUABLE_CRAFTING_SPACE_BLOCK;
     }
 }

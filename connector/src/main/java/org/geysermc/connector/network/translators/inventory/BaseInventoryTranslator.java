@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseInventoryTranslator extends InventoryTranslator{
-    BaseInventoryTranslator(int size) {
+    protected BaseInventoryTranslator(int size) {
         super(size);
     }
 

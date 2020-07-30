@@ -38,7 +38,7 @@ import org.geysermc.connector.utils.LanguageUtils;
 
 @AllArgsConstructor
 public class ChestInventoryUpdater extends InventoryUpdater {
-    private static final ItemData UNUSUABLE_SPACE_BLOCK = InventoryUtils.createUnusableSpaceBlock(LanguageUtils.getLocaleStringLog("geyser.inventory.unusable_item.slot"));
+    private static ItemData UNUSUABLE_SPACE_BLOCK;
 
     private final int paddedSize;
 
@@ -51,7 +51,7 @@ public class ChestInventoryUpdater extends InventoryUpdater {
             if (i < translator.size) {
                 bedrockItems[i] = ItemTranslator.translateToBedrock(session, inventory.getItem(i));
             } else {
-                bedrockItems[i] = UNUSUABLE_SPACE_BLOCK;
+                bedrockItems[i] = getUnusuableSpaceBlock();
             }
         }
 
@@ -72,5 +72,12 @@ public class ChestInventoryUpdater extends InventoryUpdater {
         slotPacket.setItem(ItemTranslator.translateToBedrock(session, inventory.getItem(javaSlot)));
         session.sendUpstreamPacket(slotPacket);
         return true;
+    }
+
+    private static ItemData getUnusuableSpaceBlock() {
+        if (UNUSUABLE_SPACE_BLOCK == null) {
+            UNUSUABLE_SPACE_BLOCK = InventoryUtils.createUnusableSpaceBlock(LanguageUtils.getLocaleStringLog("geyser.inventory.unusable_item.slot"));
+        }
+        return UNUSUABLE_SPACE_BLOCK;
     }
 }
