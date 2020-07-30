@@ -36,6 +36,7 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslatorRegistry;
 import org.geysermc.connector.utils.LoginEncryptionUtils;
 import org.geysermc.connector.utils.LanguageUtils;
+import org.geysermc.connector.utils.SettingsUtils;
 
 public class UpstreamPacketHandler extends LoggingPacketHandler {
 
@@ -109,8 +110,25 @@ public class UpstreamPacketHandler extends LoggingPacketHandler {
 
     @Override
     public boolean handle(ModalFormResponsePacket packet) {
-        if (connector.getEventManager().triggerEvent(new UpstreamPacketReceiveEvent<>(session, packet), packet.getClass()).isCancelled()) {
-            return true;
+        if (packet.getFormId() == SettingsUtils.SETTINGS_FORM_ID) {
+            return SettingsUtils.handleSettingsForm(session, packet.getFormData());
+        }
+
+        return LoginEncryptionUtils.authenticateFromForm(session, connector, packet.getFormId(), packet.getFormData());
+    }
+
+    private boolean couldLoginUserByName(String bedrockUsername) {
+        if (connector.getConfig().getUserAuths() != null) {
+            GeyserConfiguration.IUserAuthenticationInfo info = connector.getConfig().getUserAuths().get(bedrockUsername);
+
+            if (info != null) {
+                connector.getLogger().info(LanguageUtils.getLocaleStringLog("geyser.auth.stored_credentials", session.getAuthData().getName()));
+                session.authenticate(info.getEmail(), info.getPassword());
+
+                // TODO send a message to bedrock user telling them they are connected (if nothing like a motd
+                //      somes from the Java server w/in a few seconds)
+                return true;
+            }
         }
 
         return LoginEncryptionUtils.authenticateFromForm(session, connector, packet.getFormId(), packet.getFormData());

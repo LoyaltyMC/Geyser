@@ -35,6 +35,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.geysermc.connector.common.AuthType;
 import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.entity.Entity;
 import org.geysermc.connector.entity.PlayerEntity;
 import org.geysermc.connector.event.EventManager;
 import org.geysermc.connector.event.events.geyser.LoadBedrockSkinEvent;
@@ -109,20 +110,20 @@ public class SkinUtils {
                 ImageData.of(capeData), geometryData, "", true, false, !capeId.equals(SkinProvider.EMPTY_CAPE.getCapeId()), capeId, skinId
         );
 
-        PlayerListPacket.Entry entry;
-
-        // If we are building a PlayerListEntry for our own session we use our AuthData UUID instead of the Java UUID
-        // as bedrock expects to get back its own provided uuid
-        if (session.getPlayerEntity().getUuid().equals(uuid)) {
-            entry = new PlayerListPacket.Entry(session.getAuthData().getUUID());
-        } else {
-            entry = new PlayerListPacket.Entry(uuid);
+        // This attempts to find the xuid of the player so profile images show up for xbox accounts
+        String xuid = "";
+        for (GeyserSession session : GeyserConnector.getInstance().getPlayers()) {
+            if (session.getPlayerEntity().getUuid().equals(uuid)) {
+                xuid = session.getAuthData().getXboxUUID();
+                break;
+            }
         }
 
+        PlayerListPacket.Entry entry = new PlayerListPacket.Entry(uuid);
         entry.setName(username);
         entry.setEntityId(geyserId);
         entry.setSkin(serializedSkin);
-        entry.setXuid("");
+        entry.setXuid(xuid);
         entry.setPlatformChatId("");
         entry.setTeacher(false);
         entry.setTrustedSkin(true);
