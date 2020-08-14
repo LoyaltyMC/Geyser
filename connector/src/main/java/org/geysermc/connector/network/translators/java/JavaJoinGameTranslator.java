@@ -51,23 +51,20 @@ public class JavaJoinGameTranslator extends PacketTranslator<ServerJoinGamePacke
         entity.setEntityId(packet.getEntityId());
         // If the player is already initialized and a join game packet is sent, they
         // are swapping servers
+        String newDimension = DimensionUtils.getNewDimension(packet.getDimension());
         if (session.isSpawned()) {
             String fakeDim = entity.getDimension().equals(DimensionUtils.OVERWORLD) ? DimensionUtils.NETHER : DimensionUtils.OVERWORLD;
             DimensionUtils.switchDimension(session, fakeDim);
-            DimensionUtils.switchDimension(session, packet.getDimension());
+            DimensionUtils.switchDimension(session, newDimension);
 
-            session.getScoreboardCache().removeScoreboard();
+            session.getWorldCache().removeScoreboard();
         }
 
         if (!session.getUpstream().isInitialized()) {
-            entity.setDimension(packet.getDimension());
+            entity.setDimension(packet.getDimension().getName());
             session.initialize();
         } else {
-            // TODO: Fix this
-//            if (packet.getDimension().equals(entity.getDimension())) {
-//                DimensionUtils.switchDimension(session, entity.getDimension() == 0 ? -1 : 0);
-//            }
-            DimensionUtils.switchDimension(session, packet.getDimension());
+            DimensionUtils.switchDimension(session, packet.getDimension().getName());
         }
 
         AdventureSettingsPacket bedrockPacket = new AdventureSettingsPacket();
@@ -97,5 +94,9 @@ public class JavaJoinGameTranslator extends PacketTranslator<ServerJoinGamePacke
         List<SkinPart> skinParts = Arrays.asList(SkinPart.values());
         ClientSettingsPacket clientSettingsPacket = new ClientSettingsPacket(locale, (byte) session.getRenderDistance(), ChatVisibility.FULL, true, skinParts, HandPreference.RIGHT_HAND);
         session.sendDownstreamPacket(clientSettingsPacket);
+
+        if (!newDimension.equals(entity.getDimension())) {
+            DimensionUtils.switchDimension(session, newDimension);
+        }
     }
 }

@@ -73,7 +73,7 @@ public class ConnectorServerEventHandler implements BedrockServerEventHandler {
         pong.setEdition(connector.getEdition().getPongEdition());
         pong.setGameType("Default");
         pong.setNintendoLimited(false);
-        pong.setProtocolVersion(connector.getEdition().getCodec().getProtocolVersion());
+        pong.setProtocolVersion(BedrockProtocol.DEFAULT_BEDROCK_CODEC.getProtocolVersion());
         pong.setVersion(null); // Server tries to connect either way and it looks better
         pong.setIpv4Port(config.getBedrock().getPort());
 
@@ -110,7 +110,6 @@ public class ConnectorServerEventHandler implements BedrockServerEventHandler {
     public void onSessionCreation(BedrockServerSession bedrockServerSession) {
         bedrockServerSession.setLogging(true);
         bedrockServerSession.setPacketHandler(new UpstreamPacketHandler(connector, new GeyserSession(connector, bedrockServerSession)));
-        bedrockServerSession.setPacketCodec(connector.getEdition().getCodec());
     }
 
     @Override

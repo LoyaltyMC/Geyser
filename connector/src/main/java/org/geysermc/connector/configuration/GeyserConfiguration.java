@@ -125,6 +125,8 @@ public interface GeyserConfiguration {
         String getUniqueId();
     }
 
+    int getMtu();
+
     int getConfigVersion();
 
     static void checkGeyserConfiguration(GeyserConfiguration geyserConfig, GeyserLogger geyserLogger) {

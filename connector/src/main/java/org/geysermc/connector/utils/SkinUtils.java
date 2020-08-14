@@ -35,6 +35,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.geysermc.connector.common.AuthType;
 import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.entity.Entity;
 import org.geysermc.connector.entity.PlayerEntity;
 import org.geysermc.connector.event.EventManager;
 import org.geysermc.connector.event.events.geyser.LoadBedrockSkinEvent;
@@ -49,17 +50,6 @@ import java.util.function.Consumer;
 
 public class SkinUtils {
 
-    public static Register REGISTER = new Register();
-    private static Shim SHIM;
-
-    public static class Register {
-
-        public Register shim(Shim shim) {
-            SHIM = shim;
-            return this;
-        }
-    }
-
     public static PlayerListPacket.Entry buildCachedEntry(GeyserSession session, PlayerEntity playerEntity) {
         GameProfileData data = GameProfileData.from(playerEntity.getProfile());
         SkinProvider.Cape cape = SkinProvider.getCachedCape(data.getCapeUrl());
@@ -70,11 +60,14 @@ public class SkinUtils {
         }
 
         SkinProvider.Skin skin = SkinProvider.getCachedSkin(data.getSkinUrl());
+        if (skin == null) {
+            skin = SkinProvider.EMPTY_SKIN;
+        }
 
         return buildEntryManually(
                 session,
                 playerEntity.getProfile().getId(),
-                playerEntity.getName(),
+                playerEntity.getUsername(),
                 playerEntity.getGeyserId(),
                 skin.getTextureUrl(),
                 skin.getSkinData(),
@@ -109,6 +102,15 @@ public class SkinUtils {
                 ImageData.of(capeData), geometryData, "", true, false, !capeId.equals(SkinProvider.EMPTY_CAPE.getCapeId()), capeId, skinId
         );
 
+        // This attempts to find the xuid of the player so profile images show up for xbox accounts
+        String xuid = "";
+        for (GeyserSession player : GeyserConnector.getInstance().getPlayers()) {
+            if (player.getPlayerEntity().getUuid().equals(uuid)) {
+                xuid = player.getAuthData().getXboxUUID();
+                break;
+            }
+        }
+
         PlayerListPacket.Entry entry;
 
         // If we are building a PlayerListEntry for our own session we use our AuthData UUID instead of the Java UUID
@@ -118,11 +120,11 @@ public class SkinUtils {
         } else {
             entry = new PlayerListPacket.Entry(uuid);
         }
-
+      
         entry.setName(username);
         entry.setEntityId(geyserId);
         entry.setSkin(serializedSkin);
-        entry.setXuid("");
+        entry.setXuid(xuid);
         entry.setPlatformChatId("");
         entry.setTeacher(false);
         entry.setTrustedSkin(true);
@@ -144,7 +146,7 @@ public class SkinUtils {
          */
         public static GameProfileData from(GameProfile profile) {
             // Fallback to the offline mode of working it out
-            boolean isAlex = ((profile.getId().hashCode() % 2) == 1);
+            boolean isAlex = (Math.abs(profile.getId().hashCode() % 2) == 1);
 
             try {
                 GameProfile.Property skinProperty = profile.getProperty("textures");
@@ -243,7 +245,7 @@ public class SkinUtils {
                                 PlayerListPacket.Entry updatedEntry = buildEntryManually(
                                         session,
                                         entity.getUuid(),
-                                        entity.getName(),
+                                        entity.getUsername(),
                                         entity.getGeyserId(),
                                         skin.getTextureUrl(),
                                         skin.getSkinData(),
@@ -277,13 +279,6 @@ public class SkinUtils {
     }
 
     public static void handleBedrockSkin(PlayerEntity playerEntity, BedrockClientData clientData) {
-        if (SHIM != null) {
-            SHIM.handleBedrockSkin(playerEntity, clientData);
-            return;
-        }
-
-        GameProfileData data = GameProfileData.from(playerEntity.getProfile());
-
         GeyserConnector.getInstance().getLogger().info(LanguageUtils.getLocaleStringLog("geyser.skin.bedrock.register", playerEntity.getUsername(), playerEntity.getUuid()));
 
         try {
@@ -294,7 +289,7 @@ public class SkinUtils {
             byte[] geometryBytes = Base64.getDecoder().decode(clientData.getGeometryData().getBytes("UTF-8"));
 
             if (skinBytes.length <= (128 * 128 * 4) && !clientData.isPersonaSkin()) {
-                SkinProvider.storeBedrockSkin(playerEntity.getUuid(), data.getSkinUrl(), skinBytes);
+                SkinProvider.storeBedrockSkin(playerEntity.getUuid(), clientData.getSkinId(), skinBytes);
                 SkinProvider.storeBedrockGeometry(playerEntity.getUuid(), geometryNameBytes, geometryBytes);
             } else {
                 GeyserConnector.getInstance().getLogger().info(LanguageUtils.getLocaleStringLog("geyser.skin.bedrock.fail", playerEntity.getUsername()));

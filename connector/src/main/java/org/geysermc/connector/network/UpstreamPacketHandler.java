@@ -26,6 +26,7 @@
 package org.geysermc.connector.network;
 
 import com.nukkitx.protocol.bedrock.BedrockPacket;
+import com.nukkitx.protocol.bedrock.BedrockPacketCodec;
 import com.nukkitx.protocol.bedrock.packet.*;
 import org.geysermc.connector.GeyserEdition;
 import org.geysermc.connector.common.AuthType;
@@ -42,6 +43,7 @@ import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.network.translators.PacketTranslatorRegistry;
 import org.geysermc.connector.utils.LoginEncryptionUtils;
 import org.geysermc.connector.utils.LanguageUtils;
+import org.geysermc.connector.utils.SettingsUtils;
 
 public class UpstreamPacketHandler extends LoggingPacketHandler {
 
@@ -62,21 +64,19 @@ public class UpstreamPacketHandler extends LoggingPacketHandler {
 
     @Override
     public boolean handle(LoginPacket loginPacket) {
-        EventResult<LoginPacketReceive> result = connector.getEventManager().triggerEvent(UpstreamPacketReceiveEvent.of(session, loginPacket));
-        if (result.isCancelled()) {
-            return true;
+        BedrockPacketCodec packetCodec = BedrockProtocol.getBedrockCodec(loginPacket.getProtocolVersion());
+        if (packetCodec == null) {
+            if (loginPacket.getProtocolVersion() > BedrockProtocol.DEFAULT_BEDROCK_CODEC.getProtocolVersion()) {
+                // Too early to determine session locale
+                session.disconnect(LanguageUtils.getLocaleStringLog("geyser.network.outdated.server", BedrockProtocol.DEFAULT_BEDROCK_CODEC.getMinecraftVersion()));
+                return true;
+            } else if (loginPacket.getProtocolVersion() < BedrockProtocol.DEFAULT_BEDROCK_CODEC.getProtocolVersion()) {
+                session.disconnect(LanguageUtils.getLocaleStringLog("geyser.network.outdated.client", BedrockProtocol.DEFAULT_BEDROCK_CODEC.getMinecraftVersion()));
+                return true;
+            }
         }
 
-        loginPacket = result.getEvent().getPacket();
-
-        if (loginPacket.getProtocolVersion() > connector.getEdition().getCodec().getProtocolVersion()) {
-            // Too early to determine session locale
-            session.disconnect(LanguageUtils.getLocaleStringLog("geyser.network.outdated.server", connector.getEdition().getCodec().getMinecraftVersion()));
-            return true;
-        } else if (loginPacket.getProtocolVersion() < connector.getEdition().getCodec().getProtocolVersion()) {
-            session.disconnect(LanguageUtils.getLocaleStringLog("geyser.network.outdated.client", connector.getEdition().getCodec().getMinecraftVersion()));
-            return true;
-        }
+        session.getUpstream().getSession().setPacketCodec(packetCodec);
 
         LoginEncryptionUtils.encryptPlayerConnection(connector, session, loginPacket);
         return true;
@@ -84,10 +84,6 @@ public class UpstreamPacketHandler extends LoggingPacketHandler {
 
     @Override
     public boolean handle(ClientToServerHandshakePacket packet) {
-        if (connector.getEventManager().triggerEvent(UpstreamPacketReceiveEvent.of(session, packet)).isCancelled()) {
-            return true;
-        }
-
         PlayStatusPacket playStatus = new PlayStatusPacket();
         playStatus.setStatus(PlayStatusPacket.Status.LOGIN_SUCCESS);
         session.sendUpstreamPacket(playStatus);
@@ -128,12 +124,9 @@ public class UpstreamPacketHandler extends LoggingPacketHandler {
 
     @Override
     public boolean handle(ModalFormResponsePacket packet) {
-        EventResult<ModalFormResponsePacketReceive> result = connector.getEventManager().triggerEvent(UpstreamPacketReceiveEvent.of(session, packet));
-        if (result.isCancelled()) {
-            return true;
+        if (packet.getFormId() == SettingsUtils.SETTINGS_FORM_ID) {
+            return SettingsUtils.handleSettingsForm(session, packet.getFormData());
         }
-
-        packet = result.getEvent().getPacket();
 
         return LoginEncryptionUtils.authenticateFromForm(session, connector, packet.getFormId(), packet.getFormData());
     }

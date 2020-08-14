@@ -54,7 +54,8 @@ public class BedrockSetLocalPlayerAsInitializedTranslator extends PacketTranslat
                     }
 
                     if (entity.isPlayerList()) {
-                        playerListPacket.getEntries().add(SkinUtils.buildCachedEntry(session, entity));
+                        PlayerListPacket.Entry entry = SkinUtils.buildCachedEntry(session, entity);
+                        playerListPacket.getEntries().add(entry);
                     }
                 }
 
