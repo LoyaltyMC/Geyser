@@ -37,8 +37,6 @@ public enum BitArrayVersion {
     V2(2, 16, V3),
     V1(1, 32, V2);
 
-    private static final BitArrayVersion[] VALUES = values();
-
     final byte bits;
     final byte entriesPerWord;
     final int maxEntryValue;
@@ -60,14 +58,8 @@ public enum BitArrayVersion {
         throw new IllegalArgumentException("Invalid palette version: " + version);
     }
 
-    public static BitArrayVersion forBitsCeil(int bits) {
-        for (int i = VALUES.length - 1; i >= 0; i--)  {
-            BitArrayVersion version = VALUES[i];
-            if (version.bits >= bits)   {
-                return version;
-            }
-        }
-        return null;
+    public BitArray createPalette(int size) {
+        return this.createPalette(size, new int[MathUtils.ceil((float) size / entriesPerWord)]);
     }
 
     public byte getId() {
@@ -86,11 +78,7 @@ public enum BitArrayVersion {
         return next;
     }
 
-    public BitArray createArray(int size) {
-        return this.createArray(size, new int[MathUtils.ceil((float) size / entriesPerWord)]);
-    }
-
-    public BitArray createArray(int size, int[] words) {
+    public BitArray createPalette(int size, int[] words) {
         if (this == V3 || this == V5 || this == V6) {
             // Padded palettes aren't able to use bitwise operations due to their padding.
             return new PaddedBitArray(this, size, words);
