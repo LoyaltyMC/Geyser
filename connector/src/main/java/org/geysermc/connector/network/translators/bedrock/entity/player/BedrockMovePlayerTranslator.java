@@ -138,6 +138,18 @@ public class BedrockMovePlayerTranslator extends PacketTranslator<MovePlayerPack
         }
 
         session.sendDownstreamPacket(playerPositionRotationPacket);
+
+        if (position.getFloorY() <= -38 && position.getFloorY() >= -40) {
+            // Work around there being a floor at Y -40 and teleport the player below it
+            entity.setPosition(entity.getPosition().sub(0, 3f, 0));
+            MovePlayerPacket movePlayerPacket = new MovePlayerPacket();
+            movePlayerPacket.setRuntimeEntityId(entity.getGeyserId());
+            movePlayerPacket.setPosition(entity.getPosition());
+            movePlayerPacket.setRotation(entity.getBedrockRotation());
+            movePlayerPacket.setMode(MovePlayerPacket.Mode.TELEPORT);
+            movePlayerPacket.setTeleportationCause(MovePlayerPacket.TeleportationCause.BEHAVIOR);
+            session.sendUpstreamPacket(movePlayerPacket);
+        }
     }
 
     public boolean isValidMove(GeyserSession session, MovePlayerPacket.Mode mode, Vector3f currentPosition, Vector3f newPosition) {
