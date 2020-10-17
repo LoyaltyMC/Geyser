@@ -47,6 +47,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Data;
 import lombok.experimental.UtilityClass;
+import com.nukkitx.protocol.bedrock.packet.*;
 import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.entity.Entity;
 import org.geysermc.connector.entity.ItemFrameEntity;
