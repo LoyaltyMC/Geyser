@@ -60,6 +60,7 @@ import org.geysermc.connector.network.translators.world.chunk.BlockStorage;
 import org.geysermc.connector.network.translators.world.chunk.ChunkSection;
 import org.geysermc.connector.network.translators.world.chunk.bitarray.BitArray;
 import org.geysermc.connector.network.translators.world.chunk.bitarray.BitArrayVersion;
+import org.geysermc.connector.network.translators.world.block.entity.SkullBlockEntityTranslator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -115,7 +116,7 @@ public class ChunkUtils {
         boolean worldManagerHasMoreBlockDataThanCache = session.getConnector().getWorldManager().hasMoreBlockDataThanChunkCache();
 
         // If the received packet was a full chunk update, null sections in the chunk are guaranteed to also be null in the world manager
-        boolean shouldCheckWorldManagerOnMissingSections = isNonFullChunk && worldManagerHasMoreBlockDataThanCache;
+        boolean shouldCheckWorldManagerOnMissingSections = isNonFullChunk && worldManagerHasMoreBlockDataThanCache; //skullPosition
         Chunk temporarySection = null;
 
         for (int sectionY = 0; sectionY < javaSections.length; sectionY++) {
@@ -325,7 +326,7 @@ public class ChunkUtils {
             RemoveEntityPacket removeEntityPacket = new RemoveEntityPacket();
             removeEntityPacket.setUniqueEntityId(session.getSkullCache().get(skullPosition).getGeyserId());
             session.sendUpstreamPacket(removeEntityPacket);
-            session.getSkullCache().remove(skullPosition);
+            session.getSkullCache().remove(skullPosition); //SkullBlockEntityTranslator
         }
 
         int blockId = BlockTranslator.getBedrockBlockId(blockState);
