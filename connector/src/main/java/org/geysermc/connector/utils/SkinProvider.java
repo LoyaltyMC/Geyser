@@ -33,6 +33,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.geysermc.connector.GeyserConnector;
+import org.geysermc.connector.network.session.GeyserSession;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -173,10 +174,20 @@ public class SkinProvider {
     public static CompletableFuture<SkinAndCape> requestSkinAndCape(UUID playerId, String skinUrl, String capeUrl) {
         return CompletableFuture.supplyAsync(() -> {
             long time = System.currentTimeMillis();
+            String newSkinUrl = skinUrl;
+
+            if ("steve".equals(skinUrl) || "alex".equals(skinUrl)) {
+                for (GeyserSession session : GeyserConnector.getInstance().getPlayers()) {
+                    if (session.getPlayerEntity().getUuid().equals(playerId)) {
+                        newSkinUrl = session.getClientData().getSkinId();
+                        break;
+                    }
+                }
+            }
 
             CapeProvider provider = capeUrl != null ? CapeProvider.MINECRAFT : null;
             SkinAndCape skinAndCape = new SkinAndCape(
-                    getOrDefault(requestSkin(playerId, skinUrl, false), EMPTY_SKIN, 5),
+                    getOrDefault(requestSkin(playerId, newSkinUrl, false), EMPTY_SKIN, 5),
                     getOrDefault(requestCape(capeUrl, provider, false), EMPTY_CAPE, 5)
             );
 
